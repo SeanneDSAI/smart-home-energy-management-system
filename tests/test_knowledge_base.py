@@ -1,0 +1,72 @@
+"""
+Unit tests for src/knowledge_base.py. Run from the repository root:
+    python tests/test_knowledge_base.py
+"""
+
+import os
+import sys
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
+
+from src.knowledge_base import (load_knowledge_base, time_to_slot, slots_between,  # noqa: E402
+                                query_graph, appliances_of_type, price, facts_at)
+
+KB = load_knowledge_base(os.path.join(ROOT, "data", "scenarios", "example"))
+
+
+def test_time_to_slot():
+    assert time_to_slot("00:00") == 0
+    assert time_to_slot("07:30") == 15
+    assert time_to_slot("23:30") == 47
+    assert time_to_slot("24:00") == 0
+
+
+def test_bad_times_rejected():
+    # Each of these used to be silently turned into a wrong slot (or crash)
+    for bad in ("07:15", "25:00", "24:30", "12:60", "7pm", "12", "aa:bb", "-1:00"):
+        try:
+            time_to_slot(bad)
+        except ValueError:
+            continue
+        raise AssertionError(bad + " should have been rejected")
+
+
+def test_slots_wrap_past_midnight():
+    assert slots_between("23:00", "01:00") == [46, 47, 0, 1]
+
+
+def test_query_graph():
+    graph = KB["graph"]
+    assert query_graph(graph, "washing_machine", "is_a") == "FlexibleAppliance"
+    assert query_graph(graph, "washing_machine", "duration_slots") == 3
+    assert query_graph(graph, "FlexibleAppliance", "is_a") == "Appliance"
+    assert query_graph(graph, "toaster", "power_kw") is None
+
+
+def test_appliance_types():
+    assert appliances_of_type(KB, "FixedAppliance") == ["oven"]
+    assert "ev_charger" in appliances_of_type(KB, "FlexibleAppliance")
+
+
+def test_tariff_boundaries():
+    assert KB["tariff"][time_to_slot("07:30")] == "night"
+    assert KB["tariff"][time_to_slot("08:00")] == "day"
+    assert KB["tariff"][time_to_slot("17:00")] == "peak"
+    assert KB["tariff"][time_to_slot("19:00")] == "day"
+    assert KB["tariff"][time_to_slot("23:00")] == "night"
+    assert price(KB, time_to_slot("17:30")) == 0.42
+
+
+def test_facts_at():
+    assert facts_at(KB, time_to_slot("17:30")) >= {"tariff_peak", "occupied", "has_battery"}
+    night = facts_at(KB, time_to_slot("02:00"))
+    assert "quiet_hours" in night and "solar_generating" not in night
+
+
+if __name__ == "__main__":
+    tests = [test for name, test in sorted(globals().items()) if name.startswith("test_")]
+    for test in tests:
+        test()
+        print("PASS", test.__name__)
+    print(len(tests), "tests passed")

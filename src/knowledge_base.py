@@ -10,9 +10,15 @@ SLOTS_PER_DAY = 48
 
 
 def time_to_slot(hhmm):
-    """'07:30' -> 15. '24:00' means end of day (slot 0)."""
-    hours, minutes = hhmm.split(":")
-    return (int(hours) * 2 + int(minutes) // 30) % SLOTS_PER_DAY
+    """'07:30' -> 15. '24:00' means end of day (slot 0).
+    Rejects anything that is not HH:MM on the hour or half hour."""
+    parts = hhmm.split(":")
+    if len(parts) != 2 or not parts[0].isdigit() or not parts[1].isdigit():
+        raise ValueError("Bad time '" + hhmm + "', expected HH:MM")
+    hours, minutes = int(parts[0]), int(parts[1])
+    if hours > 24 or minutes not in (0, 30) or (hours == 24 and minutes != 0):
+        raise ValueError("Bad time '" + hhmm + "', must be on the hour or half hour, 00:00-24:00")
+    return (hours * 2 + minutes // 30) % SLOTS_PER_DAY
 
 
 def slots_between(start, end):
