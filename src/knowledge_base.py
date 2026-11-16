@@ -102,16 +102,19 @@ def appliances_of_type(kb, appliance_type):
 
 
 def price(kb, slot):
+    slot = slot % SLOTS_PER_DAY  # slot 48 -> 0, so runs past midnight work
     return kb["prices"][kb["tariff"][slot]]
 
 
 def hourly_value(kb, profile, slot):
     """carbon, solar or base_load for a slot (two slots per hour)."""
+    slot = slot % SLOTS_PER_DAY
     return kb[profile][slot // 2]
 
 
 def facts_at(kb, slot):
     """Facts true at one slot, as strings for forward chaining."""
+    slot = slot % SLOTS_PER_DAY
     facts = {"tariff_" + kb["tariff"][slot]}
     if slot in kb["occupied"]:
         facts.add("occupied")
