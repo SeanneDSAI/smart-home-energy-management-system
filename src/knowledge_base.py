@@ -5,6 +5,7 @@ The day is 48 slots of 30 minutes (slot 0 = 00:00)..
 
 import json
 import os
+import math
 
 SLOTS_PER_DAY = 48
 
@@ -45,7 +46,7 @@ def load_knowledge_base(folder):
         if item["power_kw"] <= 0:
             raise ValueError(item["name"] + ": power must be positive")
         entity = {"power_kw": item["power_kw"],
-                  "duration_slots": item["duration_minutes"] // 30,
+                  "duration_slots": math.ceil(item["duration_minutes"] / 30),
                   "noisy": item.get("noisy", False)}
         if item["flexible"]:
             entity["is_a"] = "FlexibleAppliance"
@@ -54,6 +55,8 @@ def load_knowledge_base(folder):
         else:
             entity["is_a"] = "FixedAppliance"
             entity["start_slot"] = time_to_slot(item["start"])
+        if item["name"] in graph or item["name"] in ("home", "battery"):
+            raise ValueError("Duplicate or reserved appliance name: " + item["name"])
         graph[item["name"]] = entity
 
     home = data["home"]
