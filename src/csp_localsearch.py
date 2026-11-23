@@ -18,3 +18,9 @@ SLOTS_HOURS = 0.5
 W_MONEY = 1.0
 W_PENALTY = 10.0
 W_CARBON = 0.000083 #In the EU carbon market, CO₂ trades at roughly €0.000083 per gram (based on the live Trading Economics EU Carbon Permits)
+
+def time_slots(slot):
+    """slot 1: 00:00, slot 15 = 07:30, slot 48 = 00:00"""
+    
+    #using % to return 0
+    slot = slot % SLOTS_PER_DAY
