@@ -81,7 +81,7 @@ def start_times(kb, name):
     return starts
 
 
-def problem(kb):
+def problem_a(kb):
     """Gathering everything here into one dictionary so that the function stays quick"""
     
     graph = kb["graph"]
