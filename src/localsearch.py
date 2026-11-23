@@ -135,61 +135,6 @@ def random_state(problem):
     
     return results
         
-def cost(problem, state):
-    """cost = money + carbon + penalty * violations"""
-
-    # demand in every slot = background + the appliances we are scheduling
-    demand = list(problem["background"])
-    for i, start in enumerate(state):
-        for step in range(problem["duration"][i]):
-            demand[(start + step) % SLOTS_PER_DAY] += problem["power"][i]
-    
-    money = 0.0         # Total electricity cost
-    carbon = 0.0        # Total carbon emissions
-    violations = 0.0    # Total number of constraint violations
-
-    # Loop through each time slot in the day
-    for s in range(SLOTS_PER_DAY):
-        # Calculate how much electricity is needed from the grid after using solar (formula came from physics friend)
-        grid = max(0.0, demand[s] - problem["solar"][s])
-
-        kwh = grid * SLOT_HOURS  # Convert power usage into kWh
-
-        money += kwh * problem["price"][s]    # Add electricity cost
-        carbon += kwh * problem["carbon"][s]  # Add carbon emissions
-
-        # Check if electricity usage goes over the supply limit
-        violations += max(0.0, grid - problem["supply_limit"])
-
-    # Check if noisy appliances are running during quiet hours
-    for i, start in enumerate(state):
-        if problem["noisy"][i]:  # Check if the appliance is noisy
-            for step in range(problem["duration"][i]):  # Loop through its running time
-                # Check if the appliance runs during quiet hours
-                if (start + step) % SLOTS_PER_DAY in problem["kb"]["quiet"]:
-                    violations += 1.0  # Add a penalty for breaking quiet hours
-
-    # Calculate the final score using cost, carbon emissions and penalties
-    return W_MONEY * money + W_CARBON * carbon + W_PENALTY * violations
-
-
-
-
-
-
-"""Quick check to see if program runs correctly"""
-
-if __name__ == "__main__":
-    from src.knowledge_base import load_knowledge_base
-
-    kb = load_knowledge_base("data/scenarios/example")
-    problem = problem_a(kb)
-
-
-    start = random_state(problem)
-    print("Start :", start, round(cost(problem, start), 3))
-
-
 
 
 
