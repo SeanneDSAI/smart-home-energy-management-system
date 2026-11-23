@@ -68,3 +68,26 @@ def test_quiet_hours_blocks_noisy_appliances():
 def test_every_firing_has_an_explanation():
     _, fired = forward_chain({"tariff_peak", "has_battery", "battery_has_charge"}, RULES)
     assert fired and all(because for _, _, because in fired)
+
+    def test_full_day_uses_solar():
+    # With the headroom tweak and surplus check, the solar rule must fire during the day.
+    assert any(row["battery_action"] == "charge_solar" for row in run_day(KB))
+
+
+def test_day_never_charges_and_discharges_in_same_slot():
+    for row in run_day(KB):
+        assert row["battery_action"] in (None, "discharge", "charge_grid", "charge_solar")
+
+
+def test_state_of_charge_stays_within_limits():
+    battery = KB["graph"]["battery"]
+    for row in run_day(KB):
+        assert battery["min_charge_kwh"] - 1e-6 <= row["soc_kwh"] <= battery["capacity_kwh"] + 1e-6
+
+
+if __name__ == "__main__":
+    tests = [t for name, t in sorted(globals().items()) if name.startswith("test_")]
+    for t in tests:
+        t()
+        print("PASS", t.__name__)
+    print(len(tests), "tests passed")
