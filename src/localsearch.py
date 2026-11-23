@@ -174,3 +174,28 @@ def cost(problem, state):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"""Quick check to see if program runs correctly"""
+
+if __name__ == "__main__":
+    from src.knowledge_base import load_knowledge_base
+
+    kb = load_knowledge_base("data/scenarios/example")
+    problem = problem_a(kb)
+
+
+    start = random_state(problem)
+    print("Start :", start, round(cost(problem, start), 3))
