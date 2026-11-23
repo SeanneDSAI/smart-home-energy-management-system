@@ -185,6 +185,11 @@ def generate_neighbours(problem, state):
     return neighbours
 
 def hill_climbing(problem, start_state):
+    """
+    Improve a schedule by repeatedly moving to its cheapest neighbour.
+    Stops when no neighbour is cheaper (a local minimum).
+    """
+    
     current = start_state
     
     while True:
