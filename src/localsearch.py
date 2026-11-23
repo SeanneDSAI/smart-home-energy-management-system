@@ -173,8 +173,24 @@ def cost(problem, state):
     return W_MONEY * money + W_CARBON * carbon + W_PENALTY * violations
 
 
+def generate_neighbours(problem, state):
+    """Every schedule that moves ONE appliance to a different start slot."""
+    neighbours = []
+    for i in range(len(state)):
+        for slot in problem["domains"][i]:
+            if slot != state[i]:
+                new_state = list(state)      # copy, so state is not changed
+                new_state[i] = slot
+                neighbours.append(new_state)
+    return neighbours
 
-
+def hill_climbing(problem, start_state):
+    current = start_state
+    
+    while True:
+        neighbours = generate_neighbours(problem, current)
+        
+    
 
 
 
@@ -203,3 +219,4 @@ if __name__ == "__main__":
     
     for name, slot in zip(problem["names"], start):
         print(name, "starts at", time_slots(slot))
+        print("\n")
