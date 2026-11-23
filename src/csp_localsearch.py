@@ -37,12 +37,45 @@ def time_slots(slot):
 
 
 def start_times(kb, name):
+    """
+    Return every slot in which a flexible appliance may START.
+
+    The appliance must start no earlier than earliest_slot and
+    finish no later than latest_finish_slot.
+
+    The window can wrap past midnight (for example an EV that
+    may charge from 18:00 until 07:00), so we work with the
+    LENGTH of the window rather than comparing slot numbers.
+    """
     
     #the knowledge graph: every appliance, plus the home and battery
-    graph = kb["graph"]
+    graph = kb["graph"] 
     
     #Look up this appliance's facts in the knowledge graph (all in slot numbers)
     earliest = query_graph(graph, name, "earliest_slot") #first slot it may start
     latest_finish = query_graph(graph, name, "latest_finish_slot") #sslot by which it must be done
     duration = query_graph(graph, name, "duration_slots") #how many slots it runs for
     
+    # Number of slots between earliest and latest finish.
+    # A result of 0 means the window covers the whole day
+    # (for example 00:00 to 24:00).
+    
+    window = (latest_finish - earliest) % SLOTS_PER_DAY #handles windows past midnight
+    
+    if window == 0: #0 -> 24 whole day
+        window = SLOTS_PER_DAY
+    
+    if window < duration:
+        raise ValueError(
+            name + ": the time window is shorter than the run time"
+        )
+    
+    # The last possible start leaves exactly 'duration' slots
+    # before the deadline.
+
+    starts = []
+
+    for offset in range(window - duration + 1):
+        starts.append((earliest + offset) % SLOTS_PER_DAY)
+
+    return starts
