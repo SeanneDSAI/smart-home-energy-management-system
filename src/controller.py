@@ -38,3 +38,73 @@ def household_demand_kw(kb, slot):
         if any((start + k) % SLOTS_PER_DAY == slot for k in range(duration)):
             kw += entity["power_kw"]
     return kw
+
+def run_day(kb):
+    """Return a slot-by-slot log of the controller's decisions and reasons."""
+    battery = kb["graph"].get("battery")
+    if battery:
+        soc = battery["initial_charge_kwh"]
+        capacity = battery["capacity_kwh"]
+        reserve = battery["min_charge_kwh"]
+        max_charge = battery["max_charge_kw"]
+        max_discharge = battery["max_discharge_kw"]
+        efficiency = battery.get("efficiency", 1.0)
+        night_target = capacity * NIGHT_CHARGE_TARGET
+    else:
+        soc = capacity = reserve = max_charge = max_discharge = night_target = 0.0
+        efficiency = 1.0
+
+    log = []
+    for slot in range(SLOTS_PER_DAY):
+        facts = set(facts_at(kb, slot))
+        demand_kw = household_demand_kw(kb, slot)
+        solar_kw = hourly_value(kb, "solar", slot)
+
+        # dynamic facts from the live state of charge and the real solar surplus
+        if battery and soc > reserve + 1e-9:
+            facts.add("battery_has_charge")
+        if battery and soc < capacity - 1e-9:
+            facts.add("battery_has_room")
+        if battery and soc < night_target - 1e-9:
+            facts.add("battery_below_night_target")
+        if solar_kw > demand_kw + 1e-9:
+            facts.add("solar_surplus")
+
+        facts, fired = forward_chain(facts, RULES)
+
+        # apply at most one battery action this slot and update the stored charge
+        action = None
+        if "discharge_battery" in facts:
+            # cover the home's demand, no more, and account for discharge losses
+            want_kwh = min(max_discharge, demand_kw) * SLOT_HOURS
+            delivered = min(want_kwh, (soc - reserve) * efficiency)
+            if delivered > 1e-9:
+                soc -= delivered / efficiency
+                action = "discharge"
+        elif "charge_battery_grid" in facts:
+            # grid power at night, stopping exactly at the overnight target (no overshoot)
+            added = min(max_charge * SLOT_HOURS * efficiency, max(0.0, night_target - soc))
+            if added > 1e-9:
+                soc += added
+                action = "charge_grid"
+        elif "charge_battery_solar" in facts:
+            # store only the spare solar (solar minus demand), with charge losses
+            surplus_kwh = max(0.0, solar_kw - demand_kw) * SLOT_HOURS
+            inflow = min(max_charge * SLOT_HOURS, surplus_kwh, (capacity - soc) / efficiency)
+            added = inflow * efficiency
+            if added > 1e-9:
+                soc += added
+                action = "charge_solar"
+
+        advice = [f for f in ("avoid_starting_appliances", "no_noisy_appliances",
+                              "reduce_usage_advice") if f in facts]
+
+        log.append({
+            "slot": slot,
+            "soc_kwh": round(soc, 2),
+            "demand_kw": round(demand_kw, 2),
+            "battery_action": action,
+            "advice": advice,
+            "why": [(name, because) for name, consequent, because in fired],
+        })
+    return log
