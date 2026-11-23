@@ -193,9 +193,13 @@ def cost(problem, state):
 if __name__ == "__main__":
     from src.knowledge_base import load_knowledge_base
 
+    
     kb = load_knowledge_base("data/scenarios/example")
     problem = problem_a(kb)
 
 
     start = random_state(problem)
     print("Start :", start, round(cost(problem, start), 3))
+    
+    for name, slot in zip(problem["names"], start):
+        print(name, "starts at", time_slots(slot))
