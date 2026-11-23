@@ -233,3 +233,6 @@ if __name__ == "__main__":
     for name, slot in zip(problem["names"], start):
         print(name, "starts at", time_slots(slot))
         print("\n")
+    
+    climbed = hill_climbing(problem, start)
+    print("Hill  :", climbed, round(cost(problem, climbed), 3))
