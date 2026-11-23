@@ -24,3 +24,11 @@ def time_slots(slot):
     
     #using % to return 0
     slot = slot % SLOTS_PER_DAY
+    
+    hours = slot//2
+    if slot % 2 == 0:
+        minutes = "00"
+    else:
+        minutes = "30"
+    #:02d makes 7 = 07
+    return f"{hours:02d}:{minutes}"
