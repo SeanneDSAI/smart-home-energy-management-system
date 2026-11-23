@@ -79,3 +79,11 @@ def start_times(kb, name):
         starts.append((earliest + offset) % SLOTS_PER_DAY)
 
     return starts
+
+
+def problem(kb):
+    """Gathering everything here into one dictionary so that the function stays quick"""
+    
+    graph = kb["graph"]
+    
+    names = appliances_of_type(kb, "FlexibleAppliances")
