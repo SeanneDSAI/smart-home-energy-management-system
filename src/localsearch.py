@@ -131,18 +131,11 @@ def random_state(problem):
     
     return results
         
-def actions(problem, state):
-    """
-    Every way to move ONE appliance to a different start slot.
-    An action is a pair (appliance_index, new_start_slot).
-    """
-    possible = []
+def cost(problem, state):
+    """cost = money + carbon + penalty * violations"""
 
-    for index in range(len(state)):
-
-        for slot in problem["domains"][index]:
-
-            if slot != state[index]:
-                possible.append((index, slot))
-
-    return possible
+    # demand in every slot = background + the appliances we are scheduling
+    demand = list(problem["background"])
+    for i, start in enumerate(state):
+        for step in range(problem["duration"][i]):
+            demand[(start + step) % SLOTS_PER_DAY] += problem["power"][i]
