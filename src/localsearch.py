@@ -90,7 +90,7 @@ def problem_a(kb):
     
     graph = kb["graph"]
     
-    names = appliances_of_type(kb, "FlexibleAppliances")
+    names = appliances_of_type(kb, "FlexibleAppliance")
     
         # Background load = base load + appliances that cannot move.
 
