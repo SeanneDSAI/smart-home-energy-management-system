@@ -87,3 +87,35 @@ def problem(kb):
     graph = kb["graph"]
     
     names = appliances_of_type(kb, "FlexibleAppliances")
+    
+        # Background load = base load + appliances that cannot move.
+
+    background = [
+        hourly_value(kb, "base_load", s)
+        for s in range(SLOTS_PER_DAY)
+    ]
+
+    for name in appliances_of_type(kb, "FixedAppliance"):
+
+        start = query_graph(graph, name, "start_slot")
+        duration = query_graph(graph, name, "duration_slots")
+        power = query_graph(graph, name, "power_kw")
+
+        for step in range(duration):
+            background[(start + step) % SLOTS_PER_DAY] += power
+
+    problem = {
+        "kb": kb,
+        "names": names,
+        "domains": [start_times(kb, name) for name in names],
+        "power": [query_graph(graph, n, "power_kw") for n in names],
+        "duration": [query_graph(graph, n, "duration_slots") for n in names],
+        "noisy": [query_graph(graph, n, "noisy") for n in names],
+        "supply_limit": query_graph(graph, "home", "supply_limit_kw"),
+        "price": [price(kb, s) for s in range(SLOTS_PER_DAY)],
+        "carbon": [hourly_value(kb, "carbon", s) for s in range(SLOTS_PER_DAY)],
+        "solar": [hourly_value(kb, "solar", s) for s in range(SLOTS_PER_DAY)],
+        "background": background,
+    }
+
+    return problem
