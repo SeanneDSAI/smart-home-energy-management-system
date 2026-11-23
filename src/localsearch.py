@@ -1,9 +1,13 @@
 #Importing libraries
 import math
 import random 
+import sys
+import os
 
+# importing queries from knowledge base
 
-#importing queries from knowledge base
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from src.knowledge_base import (
     query_graph, 
     appliances_of_type,
@@ -11,10 +15,10 @@ from src.knowledge_base import (
     SLOTS_PER_DAY, 
     load_knowledge_base)
 
-#Since the day is 48slots of 30mins, 1hr is 1.0, 30mins is 0.5
-SLOTS_HOURS = 0.5 
+# Since the day is 48slots of 30mins, 1hr is 1.0, 30mins is 0.5
+SLOT_HOURS = 0.5 
 
-#Money measured in euros, 1 = 1E
+# Money measured in euros, 1 = 1E
 W_MONEY = 1.0
 W_PENALTY = 10.0
 W_CARBON = 0.000083 #In the EU carbon market, CO₂ trades at roughly €0.000083 per gram (based on the live Trading Economics EU Carbon Permits)
@@ -48,10 +52,10 @@ def start_times(kb, name):
     LENGTH of the window rather than comparing slot numbers.
     """
     
-    #the knowledge graph: every appliance, plus the home and battery
+    # the knowledge graph: every appliance, plus the home and battery
     graph = kb["graph"] 
     
-    #Look up this appliance's facts in the knowledge graph (all in slot numbers)
+    # Look up this appliance's facts in the knowledge graph (all in slot numbers)
     earliest = query_graph(graph, name, "earliest_slot") #first slot it may start
     latest_finish = query_graph(graph, name, "latest_finish_slot") #sslot by which it must be done
     duration = query_graph(graph, name, "duration_slots") #how many slots it runs for
@@ -139,3 +143,53 @@ def cost(problem, state):
     for i, start in enumerate(state):
         for step in range(problem["duration"][i]):
             demand[(start + step) % SLOTS_PER_DAY] += problem["power"][i]
+    
+    money = 0.0         # Total electricity cost
+    carbon = 0.0        # Total carbon emissions
+    violations = 0.0    # Total number of constraint violations
+
+    # Loop through each time slot in the day
+    for s in range(SLOTS_PER_DAY):
+        # Calculate how much electricity is needed from the grid after using solar (formula came from physics friend)
+        grid = max(0.0, demand[s] - problem["solar"][s])
+
+        kwh = grid * SLOT_HOURS  # Convert power usage into kWh
+
+        money += kwh * problem["price"][s]    # Add electricity cost
+        carbon += kwh * problem["carbon"][s]  # Add carbon emissions
+
+        # Check if electricity usage goes over the supply limit
+        violations += max(0.0, grid - problem["supply_limit"])
+
+    # Check if noisy appliances are running during quiet hours
+    for i, start in enumerate(state):
+        if problem["noisy"][i]:  # Check if the appliance is noisy
+            for step in range(problem["duration"][i]):  # Loop through its running time
+                # Check if the appliance runs during quiet hours
+                if (start + step) % SLOTS_PER_DAY in problem["kb"]["quiet"]:
+                    violations += 1.0  # Add a penalty for breaking quiet hours
+
+    # Calculate the final score using cost, carbon emissions and penalties
+    return W_MONEY * money + W_CARBON * carbon + W_PENALTY * violations
+
+
+
+
+
+
+"""Quick check to see if program runs correctly"""
+
+if __name__ == "__main__":
+    from src.knowledge_base import load_knowledge_base
+
+    kb = load_knowledge_base("data/scenarios/example")
+    problem = problem_a(kb)
+
+
+    start = random_state(problem)
+    print("Start :", start, round(cost(problem, start), 3))
+
+
+
+
+
