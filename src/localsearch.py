@@ -196,7 +196,7 @@ def hill_climbing(problem, start_state):
         for neighbour in neighbours:
             neighbour_cost = cost(problem, neighbour)
             
-            if neighbour_cost > best_cost:
+            if neighbour_cost < best_cost:
                 best = neighbour
                 best_cost = neighbour_cost
         
