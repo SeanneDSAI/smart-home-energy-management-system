@@ -55,3 +55,16 @@ def test_solar_needs_surplus_not_just_sun():
 def test_quiet_hours_blocks_noisy_appliances():
     facts, _ = forward_chain({"quiet_hours"}, RULES)
     assert "no_noisy_appliances" in facts
+
+    def test_rules_chain_through_costly_period():
+    # classify_peak concludes "costly_period"; other rules build on that conclusion.
+    facts, fired = forward_chain({"tariff_peak", "occupied"}, RULES)
+    assert "costly_period" in facts            # derived, not an input fact
+    assert "reduce_usage_advice" in facts       # occupied_reduce depends on costly_period
+    names = [name for name, _, _ in fired]
+    assert names.index("classify_peak") < names.index("occupied_reduce")
+
+
+def test_every_firing_has_an_explanation():
+    _, fired = forward_chain({"tariff_peak", "has_battery", "battery_has_charge"}, RULES)
+    assert fired and all(because for _, _, because in fired)
