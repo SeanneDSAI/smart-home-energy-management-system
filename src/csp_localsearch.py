@@ -36,4 +36,13 @@ def time_slots(slot):
     return f"{hours:02d}:{minutes}"
 
 
-def start_times(kb, start)
+def start_times(kb, name):
+    
+    #the knowledge graph: every appliance, plus the home and battery
+    graph = kb["graph"]
+    
+    #Look up this appliance's facts in the knowledge graph (all in slot numbers)
+    earliest = query_graph(graph, name, "earliest_slot") #first slot it may start
+    latest_finish = query_graph(graph, name, "latest_finish_slot") #sslot by which it must be done
+    duration = query_graph(graph, name, "duration_slots") #how many slots it runs for
+    
