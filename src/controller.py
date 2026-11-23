@@ -108,3 +108,20 @@ def run_day(kb):
             "why": [(name, because) for name, consequent, because in fired],
         })
     return log
+
+def print_day(kb):
+    """Readable summary for a quick check or the demo."""
+    for row in run_day(kb):
+        if not row["battery_action"] and not row["advice"]:
+            continue
+        hh, mm = row["slot"] // 2, "30" if row["slot"] % 2 else "00"
+        action = row["battery_action"] or "-"
+        why = "; ".join(because for _, because in row["why"])
+        print(f"{hh:02d}:{mm}  soc={row['soc_kwh']:>5} kWh  demand={row['demand_kw']:>4} kW  "
+              f"{action:<12} {why}")
+
+
+if __name__ == "__main__":
+    here = os.path.dirname(os.path.abspath(__file__))
+    data = os.path.join(here, "..", "data", "scenarios", "example")
+    print_day(load_knowledge_base(data))
