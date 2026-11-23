@@ -56,7 +56,7 @@ def test_quiet_hours_blocks_noisy_appliances():
     facts, _ = forward_chain({"quiet_hours"}, RULES)
     assert "no_noisy_appliances" in facts
 
-    def test_rules_chain_through_costly_period():
+def test_rules_chain_through_costly_period():
     # classify_peak concludes "costly_period"; other rules build on that conclusion.
     facts, fired = forward_chain({"tariff_peak", "occupied"}, RULES)
     assert "costly_period" in facts            # derived, not an input fact
@@ -69,7 +69,7 @@ def test_every_firing_has_an_explanation():
     _, fired = forward_chain({"tariff_peak", "has_battery", "battery_has_charge"}, RULES)
     assert fired and all(because for _, _, because in fired)
 
-    def test_full_day_uses_solar():
+def test_full_day_uses_solar():
     # With the headroom tweak and surplus check, the solar rule must fire during the day.
     assert any(row["battery_action"] == "charge_solar" for row in run_day(KB))
 
