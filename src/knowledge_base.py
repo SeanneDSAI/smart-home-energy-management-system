@@ -1,6 +1,61 @@
 """
- knowledge base: stores and retrieves the facts the system reasons over.
-The day is 48 slots of 30 minutes (slot 0 = 00:00)..
+Knowledge base: stores and retrieves the facts the system reasons over.
+
+CONVENTIONS
+  - The day is 48 slots of 30 minutes. Slot 0 = 00:00, slot 15 = 07:30, slot 47 = 23:30.
+  - Times are "HH:MM" on the hour or half hour. "24:00" means end of day.
+  - Time ranges are [start, end) and wrap past midnight: ["23:00", "07:00"] is overnight.
+  - Run times round UP to whole slots (50 minutes -> 2 slots).
+  - Slot numbers past 47 wrap round (48 -> 0) in price, hourly_value and facts_at.
+
+INPUT: a scenario folder holding four JSON files
+  appliances.json  list of appliances, each with:
+      name              unique; "home" and "battery" are reserved
+      power_kw          power draw while running (must be > 0)
+      duration_minutes  how long one run takes
+      flexible          true  -> also needs earliest (first start time) and
+                                 latest_finish (time it must be done by)
+                        false -> also needs start (fixed start time)
+      noisy             optional, default false; noisy appliances are kept out of quiet hours
+  tariff.json
+      periods                  list of {name, times: [[start, end], ...], price_eur_per_kwh};
+                               together they must cover every slot exactly once
+      carbon_g_per_kwh_hourly  24 hourly grid carbon values (g CO2 per kWh)
+  occupancy.json
+      home   list of [start, end] when someone is home
+      quiet  list of [start, end] quiet hours
+  home.json
+      supply_limit_kw      maximum total load from the grid
+      base_load_kw_hourly  24 hourly values for always-on load (fridge, lights...)
+      solar_kw_hourly      optional, 24 hourly solar output values (missing -> no solar)
+      battery              optional: capacity_kwh, max_charge_kw, max_discharge_kw,
+                           initial_charge_kwh, min_charge_kwh, efficiency (0-1)
+
+OUTPUT: load_knowledge_base(folder) returns a dict
+  graph      knowledge graph, {entity: {relationship: value}}
+               "FlexibleAppliance" / "FixedAppliance"  -> is_a "Appliance"
+               each appliance -> is_a, power_kw, duration_slots, noisy, and either
+                                 earliest_slot + latest_finish_slot (flexible) or start_slot (fixed)
+               "home"         -> is_a "Home", supply_limit_kw
+               "battery"      -> is_a "Battery", plus the battery fields above (only if present)
+  tariff     list of 48 period names, one per slot, e.g. tariff[34] == "peak"
+  prices     {period name: EUR per kWh}
+  occupied   set of slots when someone is home
+  quiet      set of slots in quiet hours
+  carbon     24 hourly values (g CO2 per kWh)
+  solar      24 hourly values (kW), all 0 if the house has no solar
+  base_load  24 hourly values (kW)
+
+QUERIES
+  query_graph(graph, entity, relationship)  -> value, or None if unknown
+  appliances_of_type(kb, "FlexibleAppliance" or "FixedAppliance")  -> list of names
+  price(kb, slot)                    -> EUR per kWh in that slot
+  hourly_value(kb, "carbon" / "solar" / "base_load", slot)  -> value for that slot's hour
+  facts_at(kb, slot)                 -> set of facts for the rule engine:
+        tariff_night / tariff_day / tariff_peak, occupied, quiet_hours,
+        solar_generating, has_battery
+  time_to_slot("07:30") -> 15,  slot_to_time(15) -> "07:30"
+  describe_kb(kb)                    -> readable summary (python -m src.knowledge_base)
 """
 
 import json
