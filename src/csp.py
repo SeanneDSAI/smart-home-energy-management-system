@@ -148,6 +148,11 @@ def quiet_ok(problem,i,start):
     return True
 
 def load_per_slot(problem,assignment):
+    """
+    Total demand in every slot: background load plus every appliance
+    placed so far. 'assignment' is a dict {appliance number: start slot}
+    and may be partial (only some appliances placed yet).
+    """
     load = list(problem["background"])
     for i, start in assignment.items():
         for slot in running_slots(problem,i,start):
@@ -155,6 +160,12 @@ def load_per_slot(problem,assignment):
     return
 
 def supply_ok(problem,assignment):
+    """
+    Supply-limit constraint: in every slot, the power taken from the grid
+    (demand minus solar) must not go over the home's supply limit.
+    Same formula as the cost function, so 'valid' here means no supply
+    penalty there.
+    """
     load = load_per_slot(problem,assignment)
     for s in range(SLOTS_PER_DAY):
         grid = max(0.0,load[s] - problem["solar"][s])
@@ -164,6 +175,7 @@ def supply_ok(problem,assignment):
     return True
 
 def is_valid(problem,schedule):
+    """Check a complete schedule (list of start slots) against every constraint."""
     for i,start in enumerate(schedule):
         if start not in problem["domains"][i]:
             return False
