@@ -164,9 +164,12 @@ def cost(problem, state):
     # Check if noisy appliances are running during quiet hours
     for i, start in enumerate(state):
         if problem["noisy"][i]:  # Check if the appliance is noisy
+
             for step in range(problem["duration"][i]):  # Loop through its running time
+
                 # Check if the appliance runs during quiet hours
                 if (start + step) % SLOTS_PER_DAY in problem["kb"]["quiet"]:
+
                     violations += 1.0  # Add a penalty for breaking quiet hours
 
     # Calculate the final score using cost, carbon emissions and penalties
@@ -174,10 +177,16 @@ def cost(problem, state):
 
 
 def generate_neighbours(problem, state):
-    """Every schedule that moves ONE appliance to a different start slot."""
+    """Every schedule that moves ONE appliance to a different start slot.
+        the point is to pick the cheapest slot for every appliance"""
     neighbours = []
+
+    # Iterating through every state
     for i in range(len(state)):
+
+        # Checking which slots the appliance can start at 
         for slot in problem["domains"][i]:
+            #If the current slot is not equal to the neighoubour switch it with the new one
             if slot != state[i]:
                 new_state = list(state)      # copy, so state is not changed
                 new_state[i] = slot
@@ -212,6 +221,13 @@ def hill_climbing(problem, start_state):
 
 
 
+def random_restarting_hillclimbing(restarts = 20):
+    best_solution = None
+    best_cost = float("inf")
+
+    for _ in range (restarts):
+
+        solution = hill_climbing(problem, random_state(problem))
 
 
 
