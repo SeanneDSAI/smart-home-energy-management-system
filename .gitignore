@@ -1,0 +1,16 @@
+# Python bytecode and caches
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Virtual environments and secrets
+.venv/
+venv/
+.env
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+tempCodeRunnerFile.*
+*.mongodb.js
