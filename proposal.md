@@ -7,12 +7,12 @@
 
 | Name | Student Number | GitHub Username |
 |------|----------------|-----------------|
-| Arshdip Chera | C24385641 | AshACxx |
-| Seanne Oriemo | C24384533 | SeanneDSAI |
-| Alex Rolff | C24319666 | roflalex |
-| Karl Ypil | C24383681 | Kpil06 |
-| Allen Lapitan | C24383676 | lentenamen |
-| Dillon Thornton | C24452624 | dillon329 |
+| Arshdip Chera | C24385641 | [AshACxx](https://github.com/AshACxx) |
+| Seanne Oriemo | C24384533 | [SeanneDSAI](https://github.com/SeanneDSAI) |
+| Alex Rolff | C24319666 | [roflalex](https://github.com/roflalex) |
+| Karl Ypil | C24383681 | [Kpil06](https://github.com/Kpil06) |
+| Allen Lapitan | C24383676 | [lentenamen](https://github.com/lentenamen) |
+| Dillon Thornton | C24452624 | [dillon329](https://github.com/dillon329) |
 
 ## Problem Description
 
@@ -44,13 +44,15 @@ Architecture: an input layer (device, tariff and preference data) feeds the know
 
 ## Planned Contributions
 
-The project breaks into the following roles. The team will assign members to these before submission.
+The project is split into six roles, with one lead per team member:
 
-- Knowledge base and data model (devices, power draw, tariff calendar, occupancy)
-- CSP scheduler and search
-- Rule-based controller (expert system)
-- Local search / optimisation of schedules
-- Testing, evaluation and example scenarios
-- Integration, dashboard/CLI, README and documentation
+| Role | Lead | Responsibilities |
+|------|------|------------------|
+| **Knowledge Base & Data Model** | [Dillon Thornton](https://github.com/dillon329) | Device facts (power draw, flexibility, deadlines), tariff calendar, occupancy data |
+| **CSP Scheduler & Search** | [Alex Rolff](https://github.com/roflalex) | Variables, domains and constraints; backtracking search with constraint propagation |
+| **Rule-Based Controller** | [Seanne Oriemo](https://github.com/SeanneDSAI) | Expert-system rules for live control (battery, EV, solar surplus) using forward chaining |
+| **Local Search & Optimisation** | [Arshdip Chera](https://github.com/AshACxx) | Cost + carbon objective; hill-climbing / simulated annealing over feasible schedules |
+| **Testing & Evaluation** | [Karl Ypil](https://github.com/Kpil06) | Example scenarios, baseline comparisons, metrics and results |
+| **Integration & Documentation** | [Allen Lapitan](https://github.com/lentenamen) | Connecting components, CLI/dashboard, README and documentation |
 
-Roles will overlap in the code, so these describe who leads each part rather than strict boundaries. Progress will be tracked through regular GitHub commits.
+**Note:** Roles will overlap in the code, so each lead owns their component but is not its only contributor. Progress will be tracked through regular GitHub commits.
