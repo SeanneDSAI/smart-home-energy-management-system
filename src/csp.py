@@ -137,3 +137,13 @@ def running_slots(problem, i, start):
     for step in range(problem["duration"][i]):
         slots.append((start + step) % SLOTS_PER_DAY)   # % wraps past midnight
     return slots
+
+def quiet_ok(problem,i,start):
+    """Quiet-hours constraint: a noisy appliance may not run in a slot"""
+    if not problem["noisy"][i]:
+        return True 
+    for slot in running_slots(problem,i,start):
+        if slot in problem["kb"]["quiet"]:
+            return False
+    return True
+
