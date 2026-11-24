@@ -33,8 +33,8 @@ See [proposal.md](proposal.md) for the full problem description and design.
 ## Setup
 
 ```bash
-git clone <https://github.com/SeanneDSAI/smart-home-energy-management-system>
-cd kdai_group
+git clone https://github.com/SeanneDSAI/smart-home-energy-management-system
+cd smart-home-energy-management-system
 
 python -m venv .venv
 # Windows
@@ -82,7 +82,7 @@ pytest
 ## Project structure
 
 ```text
-kdai_group/
+smart-home-energy-management-system/
 ├── data/
 │   └── scenarios/
 │       └── example/          # one scenario = four JSON files
