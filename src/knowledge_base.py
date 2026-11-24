@@ -97,8 +97,13 @@ def query_graph(graph, entity, relationship):
 
 
 def appliances_of_type(kb, appliance_type):
-    """Names of all 'FlexibleAppliance' or 'FixedAppliance' """
-    return [name for name, edges in kb["graph"].items() if edges.get("is_a") == appliance_type]
+    """Names of all 'FlexibleAppliance' or 'FixedAppliance'.
+    Raises ValueError for any other type, so a typo fails loudly instead of returning []."""
+    graph = kb["graph"]
+    if query_graph(graph, appliance_type, "is_a") != "Appliance":
+        known = sorted(n for n, edges in graph.items() if edges.get("is_a") == "Appliance")
+        raise ValueError("Unknown appliance type '" + str(appliance_type) + "', expected one of " + str(known))
+    return [name for name, edges in graph.items() if edges.get("is_a") == appliance_type]
 
 
 def price(kb, slot):
