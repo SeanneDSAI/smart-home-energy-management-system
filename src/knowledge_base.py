@@ -22,6 +22,12 @@ def time_to_slot(hhmm):
     return (hours * 2 + minutes // 30) % SLOTS_PER_DAY
 
 
+def slot_to_time(slot):
+    """15 -> '07:30'. Inverse of time_to_slot (slot 48 wraps to '00:00')."""
+    slot = slot % SLOTS_PER_DAY
+    return "%02d:%02d" % (slot // 2, (slot % 2) * 30)
+
+
 def slots_between(start, end):
     """Slots from start up to (not including) end, wrapping past midnight."""
     slot, last = time_to_slot(start), time_to_slot(end)
@@ -97,8 +103,13 @@ def query_graph(graph, entity, relationship):
 
 
 def appliances_of_type(kb, appliance_type):
-    """Names of all 'FlexibleAppliance' or 'FixedAppliance' """
-    return [name for name, edges in kb["graph"].items() if edges.get("is_a") == appliance_type]
+    """Names of all 'FlexibleAppliance' or 'FixedAppliance'.
+    Raises ValueError for any other type, so a typo fails loudly instead of returning []."""
+    graph = kb["graph"]
+    if query_graph(graph, appliance_type, "is_a") != "Appliance":
+        known = sorted(n for n, edges in graph.items() if edges.get("is_a") == "Appliance")
+        raise ValueError("Unknown appliance type '" + str(appliance_type) + "', expected one of " + str(known))
+    return [name for name, edges in graph.items() if edges.get("is_a") == appliance_type]
 
 
 def price(kb, slot):
@@ -125,3 +136,74 @@ def facts_at(kb, slot):
     if "battery" in kb["graph"]:
         facts.add("has_battery")
     return facts
+
+
+def _slot_ranges(slots):
+    """Group slot numbers into 'HH:MM-HH:MM' ranges, joining runs that cross midnight."""
+    slots = sorted(set(s % SLOTS_PER_DAY for s in slots))
+    if not slots:
+        return "none"
+    if len(slots) == SLOTS_PER_DAY:
+        return "all day"
+    runs = []
+    for slot in slots:
+        if runs and slot == runs[-1][1] + 1:
+            runs[-1][1] = slot
+        else:
+            runs.append([slot, slot])
+    if len(runs) > 1 and runs[0][0] == 0 and runs[-1][1] == SLOTS_PER_DAY - 1:
+        runs[0][0] = runs.pop()[0]   # e.g. 23:00-24:00 + 00:00-07:00 -> 23:00-07:00
+    return ", ".join(slot_to_time(a) + "-" + slot_to_time(b + 1) for a, b in runs)
+
+
+def describe_kb(kb):
+    """Readable summary of everything in the knowledge base, for the CLI, dashboard or demos."""
+    graph = kb["graph"]
+    lines = ["House", "  Supply limit: " + str(query_graph(graph, "home", "supply_limit_kw")) + " kW"]
+
+    lines.append("Appliances")
+    for name in appliances_of_type(kb, "FlexibleAppliance"):
+        e = graph[name]
+        lines.append("  %-17s %4.1f kW  %3d min  flexible, start from %s, done by %s%s" % (
+            name, e["power_kw"], e["duration_slots"] * 30, slot_to_time(e["earliest_slot"]),
+            slot_to_time(e["latest_finish_slot"]), ", noisy" if e["noisy"] else ""))
+    for name in appliances_of_type(kb, "FixedAppliance"):
+        e = graph[name]
+        lines.append("  %-17s %4.1f kW  %3d min  fixed, starts at %s%s" % (
+            name, e["power_kw"], e["duration_slots"] * 30, slot_to_time(e["start_slot"]),
+            ", noisy" if e["noisy"] else ""))
+
+    lines.append("Tariff")
+    for period, cost in kb["prices"].items():
+        slots = [s for s in range(SLOTS_PER_DAY) if kb["tariff"][s] == period]
+        lines.append("  %-6s EUR %.2f/kWh  %s" % (period, cost, _slot_ranges(slots)))
+
+    lines.append("Occupancy")
+    lines.append("  Home:        " + _slot_ranges(kb["occupied"]))
+    lines.append("  Quiet hours: " + _slot_ranges(kb["quiet"]))
+
+    lines.append("Solar")
+    if any(kb["solar"]):
+        peak = max(range(24), key=lambda h: kb["solar"][h])
+        lines.append("  %.1f kWh over the day, peak %.1f kW at %02d:00" % (
+            sum(kb["solar"]), kb["solar"][peak], peak))
+    else:
+        lines.append("  none")
+
+    lines.append("Battery")
+    battery = graph.get("battery")
+    if battery:
+        lines.append("  %.1f kWh capacity, starts at %.1f kWh, keeps %.1f kWh in reserve" % (
+            battery["capacity_kwh"], battery["initial_charge_kwh"], battery["min_charge_kwh"]))
+        lines.append("  charge %.1f kW / discharge %.1f kW, %d%% efficient" % (
+            battery["max_charge_kw"], battery["max_discharge_kw"], round(battery["efficiency"] * 100)))
+    else:
+        lines.append("  none")
+    return "\n".join(lines)
+
+
+if __name__ == "__main__":
+    # python -m src.knowledge_base [scenario folder]
+    import sys
+    folder = sys.argv[1] if len(sys.argv) > 1 else os.path.join("data", "scenarios", "example")
+    print(describe_kb(load_knowledge_base(folder)))
