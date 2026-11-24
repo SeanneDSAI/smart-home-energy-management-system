@@ -1,7 +1,6 @@
-# smart-home-enerygy-management-system
+# Smart Home Energy Management System (SHEMS)
+
 Knowledge-driven AI system that schedules home appliances and battery use to cut electricity cost and carbon under time-of-use tariffs.
-<<<<<<< HEAD
-=======
 
 **Module:** AINL3001 Knowledge-Driven AI · **Group:** Dream Team Wallahi
 
@@ -34,7 +33,7 @@ See [proposal.md](proposal.md) for the full problem description and design.
 ## Setup
 
 ```bash
-git clone <https://github.com/SeanneDSAI/smart-home-energy-management-system>
+git clone https://github.com/SeanneDSAI/smart-home-energy-management-system
 cd smart-home-energy-management-system
 
 python -m venv .venv
@@ -83,7 +82,7 @@ pytest
 ## Project structure
 
 ```text
-kdai_group/
+smart-home-energy-management-system/
 ├── data/
 │   └── scenarios/
 │       └── example/          # one scenario = four JSON files
@@ -158,4 +157,3 @@ To add a scenario, copy `data/scenarios/example/` to a new folder and edit the f
 | Arshdip Chera | Local Search & Optimisation | [AshACxx](https://github.com/AshACxx) |
 | Karl Ypil | Testing & Evaluation | [Kpil06](https://github.com/Kpil06) |
 | Allen Lapitan | Integration & Documentation | [lentenamen](https://github.com/lentenamen) |
->>>>>>> 6792b55 (updated setup instructions)

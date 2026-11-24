@@ -1,26 +1,35 @@
-#Importing libraries
-import math
-import random 
+"""
+CSP scheduler: decides WHEN each flexible appliance runs.
 
+The day is modelled as a constraint satisfaction problem (CSP):
+  Variables   : the flexible appliances (each one gets a start slot)
+  Domains     : the start slots that respect the appliance's earliest
+                start and deadline (taken from the knowledge base)
+  Constraints : quiet hours  - a noisy appliance may not run in a quiet slot
+                supply limit - the load from the grid may never go over the limit
 
-#importing queries from knowledge base
+Backtracking search (with MRV and forward checking) finds valid schedules.
+A schedule is a list of start slots, one per appliance, in the same order
+as problem["names"] - the same format the local search uses.
+
+Quick check:  python src/csp.py
+"""
+
+import os
+import sys
+
+# Put the repository root on the path so "from src.x import ..." works
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from src.knowledge_base import (
-    query_graph, 
+    query_graph,
     appliances_of_type,
-    price, hourly_value, 
-    SLOTS_PER_DAY, 
+    price, hourly_value,
+    SLOTS_PER_DAY,
     load_knowledge_base)
 
-#Since the day is 48slots of 30mins, 1hr is 1.0, 30mins is 0.5
-SLOTS_HOURS = 0.5 
-
-#Money measured in euros, 1 = 1E
-W_MONEY = 1.0
-W_PENALTY = 10.0
-W_CARBON = 0.000083 #In the EU carbon market, CO₂ trades at roughly €0.000083 per gram (based on the live Trading Economics EU Carbon Permits)
-
 def time_slots(slot):
-    """slot 1: 00:00, slot 15 = 07:30, slot 48 = 00:00"""
+    """slot 0: 00:00, slot 15 = 07:30, slot 48 = 00:00"""
     
     #using % to return 0
     slot = slot % SLOTS_PER_DAY
@@ -44,7 +53,7 @@ def start_times(kb, name):
     finish no later than latest_finish_slot.
 
     The window can wrap past midnight (for example an EV that
-    may charge from 18:00 until 07:00), so we work with the
+    may charge from 19:00 until 07:00), so we work with the
     LENGTH of the window rather than comparing slot numbers.
     """
     
@@ -81,12 +90,12 @@ def start_times(kb, name):
     return starts
 
 
-def problem(kb):
+def make_problem(kb):
     """Gathering everything here into one dictionary so that the function stays quick"""
     
     graph = kb["graph"]
     
-    names = appliances_of_type(kb, "FlexibleAppliances")
+    names = appliances_of_type(kb, "FlexibleAppliance")
     
         # Background load = base load + appliances that cannot move.
 
