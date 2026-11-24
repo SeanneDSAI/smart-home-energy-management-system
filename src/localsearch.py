@@ -236,7 +236,16 @@ def random_restarting_hillclimbing(problem, restarts = 20):
 
 
 #BONUS ALGORITHM ADDING ANNEALING FOR COMPARISON
+
+START_TEMP = 0.5
+COOLING = 0.95
+STOP_TEMP = 0.001
+
 def simulated_annealing(problem, start_state):
+    """Sometimes accept a WORSE neighbour, less often as the temperature falls."""
+    current = start_state
+    best = current
+    temp = START_TEMP
 
 
 
