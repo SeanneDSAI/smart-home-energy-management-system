@@ -14,7 +14,7 @@ sys.path.insert(0, ROOT)
 
 from src.knowledge_base import (load_knowledge_base, time_to_slot, slots_between,  # noqa: E402
                                 query_graph, appliances_of_type, price, facts_at,
-                                hourly_value)
+                                hourly_value, slot_to_time, describe_kb)
 
 KB = load_knowledge_base(os.path.join(ROOT, "data", "scenarios", "example"))
 
@@ -112,6 +112,23 @@ def test_house_without_solar_or_battery():
         assert "solar_generating" not in noon and "has_battery" not in noon
     finally:
         shutil.rmtree(folder, ignore_errors=True)
+
+
+def test_slot_to_time():
+    assert slot_to_time(0) == "00:00"
+    assert slot_to_time(15) == "07:30"
+    assert slot_to_time(48) == "00:00"
+    for slot in range(48):
+        assert time_to_slot(slot_to_time(slot)) == slot
+
+
+def test_describe_kb():
+    text = describe_kb(KB)
+    assert "washing_machine" in text and "oven" in text
+    assert "peak   EUR 0.42/kWh  17:00-19:00" in text
+    assert "night  EUR 0.18/kWh  23:00-08:00" in text      # joined across midnight
+    assert "Quiet hours: 23:00-07:00" in text
+    assert "10.0 kWh capacity" in text
 
 
 if __name__ == "__main__":
