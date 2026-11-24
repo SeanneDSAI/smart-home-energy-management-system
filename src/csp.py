@@ -202,3 +202,15 @@ def node_consistent_domains(problem):
         domains.append(kept)
     return domains
 
+# backtracking search with MRV and forward checking
+
+def select_variable(domains, assignment, use_mrv):
+    """
+    Choose which appliance to place next.
+    MRV (minimum remaining values): the one with the fewest starts left,
+    because it is the most likely to fail - better to find out early.
+    """
+    unplaced = [i for i in range(len(domains)) if i not in assignment]
+    if not use_mrv:
+        return unplaced[0]
+    return min(unplaced, key=lambda i: len(domains[i]))
