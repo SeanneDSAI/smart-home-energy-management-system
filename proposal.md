@@ -7,12 +7,12 @@
 
 | Name | Student Number | GitHub Username |
 |------|----------------|-----------------|
-| Arshdip Chera | C24385641 | AshACxx |
-| Seanne Oriemo | C24384533 | SeanneDSAI |
-| Alex Rolff | C24319666 | roflalex |
-| Karl Ypil | C24383681 | Kpil06 |
-| Allen Lapitan | C24383676 | lentenamen |
-| Dillon Thornton | C24452624 | dillon329 |
+| Arshdip Chera | C24385641 | [AshACxx](https://github.com/AshACxx) |
+| Seanne Oriemo | C24384533 | [SeanneDSAI](https://github.com/SeanneDSAI) |
+| Alex Rolff | C24319666 | [roflalex](https://github.com/roflalex) |
+| Karl Ypil | C24383681 | [Kpil06](https://github.com/Kpil06) |
+| Allen Lapitan | C24383676 | [lentenamen](https://github.com/lentenamen) |
+| Dillon Thornton | C24452624 | [dillon329](https://github.com/dillon329) |
 
 ## Problem Description
 
@@ -46,11 +46,22 @@ Architecture: an input layer (device, tariff and preference data) feeds the know
 
 The project breaks into the following roles. The team will assign members to these before submission.
 
+- [Dillon Thonrnton](https://github.com/dillon329)
 - Knowledge base and data model (devices, power draw, tariff calendar, occupancy)
+
+- [Alex Rolff](https://github.com/roflalex)
 - CSP scheduler and search
+
+- [Seanne Oreimo](https://github.com/SeanneDSAI)
 - Rule-based controller (expert system)
+
+- [Arshdip Chera](https://github.com/AshACxx)
 - Local search / optimisation of schedules
+
+- [Karl Ypil](https://github.com/Kpil06)
 - Testing, evaluation and example scenarios
+
+- [Allen Lapitan](https://github.com/lentenamen)
 - Integration, dashboard/CLI, README and documentation
 
 Roles will overlap in the code, so these describe who leads each part rather than strict boundaries. Progress will be tracked through regular GitHub commits.
