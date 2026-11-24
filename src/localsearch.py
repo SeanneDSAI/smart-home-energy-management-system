@@ -30,8 +30,6 @@ W_CARBON = 0.000083 #In the EU carbon market, CO₂ trades at roughly €0.00008
 
 
 
-
-
 def random_state(problem):
     """A random schedule (every appliance inside its time window)."""
     results = []
@@ -135,9 +133,11 @@ def random_restarting_hillclimbing(problem, restarts = 20):
     for _ in range (restarts):
 
         solution = hill_climbing(problem, random_state(problem))
+        solution_cost  = cost(problem, solution)
 
-        if  best is None or cost(problem, solution) < cost(problem, best):
+        if solution_cost < best_cost:
             best = solution
+            best_cost = solution_cost
 
     return best
 
@@ -181,7 +181,7 @@ if __name__ == "__main__":
 
     
     kb = load_knowledge_base("data/scenarios/example")
-    problem = problem_a(kb)
+    problem = make_problem(kb)
 
 
     start = random_state(problem)
