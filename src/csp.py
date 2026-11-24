@@ -128,3 +128,158 @@ def make_problem(kb):
     }
 
     return problem
+
+# Constraints
+
+def running_slots(problem, i, start):
+    """The slots appliance number i runs in if it starts at 'start'."""
+    slots = []
+    for step in range(problem["duration"][i]):
+        slots.append((start + step) % SLOTS_PER_DAY)   # % wraps past midnight
+    return slots
+
+def quiet_ok(problem,i,start):
+    """Quiet-hours constraint: a noisy appliance may not run in a slot"""
+    if not problem["noisy"][i]:
+        return True 
+    for slot in running_slots(problem,i,start):
+        if slot in problem["kb"]["quiet"]:
+            return False
+    return True
+
+def load_per_slot(problem,assignment):
+    """
+    Total demand in every slot: background load plus every appliance
+    placed so far. 'assignment' is a dict {appliance number: start slot}
+    and may be partial (only some appliances placed yet).
+    """
+    load = list(problem["background"])
+    for i, start in assignment.items():
+        for slot in running_slots(problem,i,start):
+            load[slot] += problem["power"][i]
+    return load
+
+def supply_ok(problem,assignment):
+    """
+    Supply-limit constraint: in every slot, the power taken from the grid
+    (demand minus solar) must not go over the home's supply limit.
+    Same formula as the cost function, so 'valid' here means no supply
+    penalty there.
+    """
+    load = load_per_slot(problem,assignment)
+    for s in range(SLOTS_PER_DAY):
+        grid = max(0.0, load[s] - problem["solar"][s])
+        #1e-9 absorbs float rounding
+        if grid > problem["supply_limit"] + 1e-9:
+            return False
+    return True
+
+def is_valid(problem,schedule):
+    """Check a complete schedule (list of start slots) against every constraint."""
+    for i,start in enumerate(schedule):
+        if start not in problem["domains"][i]:
+            return False
+        if not quiet_ok(problem,i,start):
+            return False
+    return supply_ok(problem,dict(enumerate(schedule)))
+
+# Node consistency
+
+def node_consistent_domains(problem):
+    """
+    Remove every start slot that breaks a constrain on its own:
+    a noisy appliance in quiet hours, or one appliance that already goes over the supply 
+    with only the background load.
+    Returns new domains; problem["domains"] is left unchanged.
+    """
+
+    domains = []
+    for i, domain in enumerate(problem["domains"]):
+        kept = []
+        for start in domain:
+            if quiet_ok(problem,i,start) and supply_ok(problem,{i:start}):
+                kept.append(start)
+        domains.append(kept)
+    return domains
+
+# backtracking search with MRV and forward checking
+
+def select_variable(domains, assignment, use_mrv):
+    """
+    Choose which appliance to place next.
+    MRV (minimum remaining values): the one with the fewest starts left,
+    because it is the most likely to fail - better to find out early.
+    """
+    unplaced = [i for i in range(len(domains)) if i not in assignment]
+    if not use_mrv:
+        return unplaced[0]
+    return min(unplaced, key=lambda i: len(domains[i]))
+
+def forward_check(problem, domains, assignment):
+    """
+    After placing an appliance, look ahead: remove the starts of every
+    unplaced appliance that would now break the supply limit.
+    Returns the new domains, or None if some appliance has no start left
+    (a dead end, so the search can back up straight away).
+    """
+    new_domains = list(domains)
+    for j in range(len(domains)):
+        if j in assignment:
+            continue
+        kept = []
+        for start in domains[j]:
+            trial = dict(assignment)
+            trial[j] = start
+            if supply_ok(problem, trial):
+                kept.append(start)
+        if not kept:
+            return None
+        new_domains[j] = kept
+    return new_domains
+
+def backtrack(problem, domains, assignment, search):
+    """
+    Recursive search. Places one appliance per level and undoes the
+    choice if it leads nowhere. Returns True once enough schedules are found.
+    """
+    search["nodes"] += 1
+
+    # Goal test: every appliance has a start slot
+    if len(assignment) == len(domains):
+        search["found"].append([assignment[i] for i in range(len(domains))])
+        return search["limit"] is not None and len(search["found"]) >= search["limit"]
+
+    i = select_variable(domains, assignment, search["mrv"])
+
+    for start in domains[i]:
+        assignment[i] = start
+        if supply_ok(problem, assignment):
+            if search["fc"]:
+                new_domains = forward_check(problem, domains, assignment)
+            else:
+                new_domains = domains
+            if new_domains is not None:
+                if backtrack(problem, new_domains, assignment, search):
+                    return True
+        del assignment[i]           # undo, then try the next start slot
+
+    return False
+
+
+def backtracking_search(problem, limit=1, use_mrv=True, use_forward_checking=True):
+    """
+    Find valid schedules.
+      limit : how many to find (1 = stop at the first, None = find them all)
+    Returns (schedules, nodes): a list of schedules and how many search
+    nodes were visited (useful for comparing the heuristics).
+    """
+    search = {"limit": limit, "mrv": use_mrv, "fc": use_forward_checking,
+              "nodes": 0, "found": []}
+
+    domains = node_consistent_domains(problem)
+    for domain in domains:
+        if not domain:                  # an appliance with no valid start at all
+            return [], 0
+
+    backtrack(problem, domains, {}, search)
+    return search["found"], search["nodes"]
