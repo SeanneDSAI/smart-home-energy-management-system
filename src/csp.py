@@ -182,3 +182,23 @@ def is_valid(problem,schedule):
         if not quiet_ok(problem,i,start):
             return False
     return supply_ok(problem,dict(enumerate(schedule)))
+
+# Node consistency
+
+def node_consistent_domains(problem):
+    """
+    Remove every start slot that breaks a constrain on its own:
+    a noisy appliance in quiet hours, or one appliance that already goes over the supply 
+    with only the background load.
+    Returns new domains; problem["domains"] is left unchanged.
+    """
+
+    domains = []
+    for i, domain in enumerate(problem["domains"]):
+        kept = []
+        for start in domain:
+            if quiet_ok(problem,i,start) and supply_ok(problem,{i:start}):
+                kept.append(start)
+        domains.append(kept)
+    return domains
+
