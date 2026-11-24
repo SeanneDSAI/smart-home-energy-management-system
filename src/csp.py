@@ -157,7 +157,7 @@ def load_per_slot(problem,assignment):
     for i, start in assignment.items():
         for slot in running_slots(problem,i,start):
             load[slot] += problem["power"][i]
-    return
+    return load
 
 def supply_ok(problem,assignment):
     """
@@ -168,7 +168,7 @@ def supply_ok(problem,assignment):
     """
     load = load_per_slot(problem,assignment)
     for s in range(SLOTS_PER_DAY):
-        grid = max(0.0,load[s] - problem["solar"][s])
+        grid = max(0.0, load[s] - problem["solar"][s])
         #1e-9 absorbs float rounding
         if grid > problem["supply_limit"] + 1e-9:
             return False
