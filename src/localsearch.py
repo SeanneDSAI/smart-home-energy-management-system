@@ -221,7 +221,7 @@ def hill_climbing(problem, start_state):
 
 
 
-def random_restarting_hillclimbing(restarts = 20):
+def random_restarting_hillclimbing(problem, restarts = 20):
     best = None
     best_cost = float("inf")
 
@@ -235,7 +235,8 @@ def random_restarting_hillclimbing(restarts = 20):
     return best
 
 
-
+#BONUS ALGORITHM ADDING ANNEALING FOR COMPARISON
+def simulated_annealing(problem, start_state):
 
 
 
