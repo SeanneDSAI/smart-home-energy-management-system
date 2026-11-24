@@ -163,3 +163,10 @@ def supply_ok(problem,assignment):
             return False
     return True
 
+def is_valid(problem,schedule):
+    for i,start in enumerate(schedule):
+        if start not in problem["domains"][i]:
+            return False
+        if not quiet_ok(problem,i,start):
+            return False
+    return supply_ok(problem,dict(enumerate(schedule)))
