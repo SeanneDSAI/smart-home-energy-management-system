@@ -247,6 +247,20 @@ def simulated_annealing(problem, start_state):
     best = current
     temp = START_TEMP
 
+    while temp > STOP_TEMP:
+        neighbour = random.choice(generate_neighbours(problem, current))
+        delta = cost(problem, neighbour) - cost(problem, current)
+
+        # always accept an improvement; accept a worse move with probability e^(-delta/T)
+        if delta < 0 or random.random() < math.exp(-delta / temp):
+            current = neighbour
+
+        if cost(problem, current) < cost(problem, best):
+            best = current
+
+        temp = temp * COOLING
+
+    return best
 
 
 
