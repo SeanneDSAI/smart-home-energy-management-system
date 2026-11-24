@@ -222,12 +222,17 @@ def hill_climbing(problem, start_state):
 
 
 def random_restarting_hillclimbing(restarts = 20):
-    best_solution = None
+    best = None
     best_cost = float("inf")
 
     for _ in range (restarts):
 
         solution = hill_climbing(problem, random_state(problem))
+
+        if  best is None or cost(problem, solution) < cost(problem, best):
+            best = solution
+
+    return best
 
 
 
