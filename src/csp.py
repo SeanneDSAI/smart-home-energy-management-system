@@ -128,3 +128,12 @@ def make_problem(kb):
     }
 
     return problem
+
+# Constraints
+
+def running_slots(problem, i, start):
+    """The slots appliance number i runs in if it starts at 'start'."""
+    slots = []
+    for step in range(problem["duration"][i]):
+        slots.append((start + step) % SLOTS_PER_DAY)   # % wraps past midnight
+    return slots
