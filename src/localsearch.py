@@ -262,3 +262,6 @@ if __name__ == "__main__":
     
     climbed = hill_climbing(problem, start)
     print("Hill  :", climbed, round(cost(problem, climbed), 3))
+
+    best = random_restarting_hillclimbing(problem)
+    print("Best  :", best, round(cost(problem, best), 3))
