@@ -237,3 +237,49 @@ def forward_check(problem, domains, assignment):
         new_domains[j] = kept
     return new_domains
 
+def backtrack(problem, domains, assignment, search):
+    """
+    Recursive search. Places one appliance per level and undoes the
+    choice if it leads nowhere. Returns True once enough schedules are found.
+    """
+    search["nodes"] += 1
+
+    # Goal test: every appliance has a start slot
+    if len(assignment) == len(domains):
+        search["found"].append([assignment[i] for i in range(len(domains))])
+        return search["limit"] is not None and len(search["found"]) >= search["limit"]
+
+    i = select_variable(domains, assignment, search["mrv"])
+
+    for start in domains[i]:
+        assignment[i] = start
+        if supply_ok(problem, assignment):
+            if search["fc"]:
+                new_domains = forward_check(problem, domains, assignment)
+            else:
+                new_domains = domains
+            if new_domains is not None:
+                if backtrack(problem, new_domains, assignment, search):
+                    return True
+        del assignment[i]           # undo, then try the next start slot
+
+    return False
+
+
+def backtracking_search(problem, limit=1, use_mrv=True, use_forward_checking=True):
+    """
+    Find valid schedules.
+      limit : how many to find (1 = stop at the first, None = find them all)
+    Returns (schedules, nodes): a list of schedules and how many search
+    nodes were visited (useful for comparing the heuristics).
+    """
+    search = {"limit": limit, "mrv": use_mrv, "fc": use_forward_checking,
+              "nodes": 0, "found": []}
+
+    domains = node_consistent_domains(problem)
+    for domain in domains:
+        if not domain:                  # an appliance with no valid start at all
+            return [], 0
+
+    backtrack(problem, domains, {}, search)
+    return search["found"], search["nodes"]
