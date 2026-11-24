@@ -1,5 +1,5 @@
 """
-Rule-based controller for SHEMS: the expert-system part.
+Rule-based controller for SHEMS: the expert-system part (Weeks 7-8).
 
 Forward chaining over a SET of string facts, matching the facts produced by
 knowledge_base.facts_at(kb, slot). A rule fires when all of its antecedents
@@ -29,6 +29,10 @@ def forward_chain(facts, rules):
     and repeat until nothing new is added (a fixed point). A rule fires at
     most once, because once its consequent is already a fact it stops adding it.
 
+    Because some rules add facts that other rules depend on (for example
+    classify_peak adds "costly_period", which the peak rules then use), the
+    reasoning can go several levels deep, not just one.
+
     Returns (closed_facts, fired), where `fired` is a list of
     (rule_name, consequent, because) explaining each firing - the Week 8
     "explanation" of the reasoning.
@@ -49,25 +53,41 @@ def forward_chain(facts, rules):
 # ---------------------------------------------------------------------------
 # The rule set.
 #
-# Antecedents use the facts from knowledge_base.facts_at(kb, slot):
+# Base facts from knowledge_base.facts_at(kb, slot):
 #   tariff_night / tariff_day / tariff_peak, occupied, quiet_hours,
 #   solar_generating, has_battery
-# plus three dynamic facts the controller adds each slot from the live battery
-# state of charge:
+# Dynamic facts the controller adds each slot:
 #   battery_has_charge          (above the reserve   -> it CAN discharge)
-#   battery_has_room            (below the capacity  -> solar CAN top it up)
-#   battery_below_night_target  (below the overnight target, e.g. 70% -> grid-charge
-#                                at night, leaving room for tomorrow's free solar)
+#   battery_has_room            (below the capacity  -> it CAN be topped up)
+#   battery_below_night_target  (below the overnight target -> grid-charge at night)
+#   solar_surplus               (solar output exceeds the home's demand right now)
+# Derived fact (added by one rule and used by others -> real forward chaining):
+#   costly_period               (concluded from tariff_peak; drives the peak rules)
 #
-# The three battery actions are mutually exclusive by tariff band (a slot is
-# exactly one of night / day / peak), so the battery never both charges and
-# discharges in the same slot.
+# The battery never charges and discharges in the same slot: solar_surplus does
+# not occur at peak in the data, and the controller applies discharge first.
 # ---------------------------------------------------------------------------
 RULES = [
+    # Classify a peak slot once, then let several rules build on that conclusion.
+    Rule("classify_peak",
+         frozenset({"tariff_peak"}),
+         "costly_period",
+         "peak tariff, so importing now is costly"),
+
     Rule("peak_discharge",
-         frozenset({"tariff_peak", "has_battery", "battery_has_charge"}),
+         frozenset({"costly_period", "has_battery", "battery_has_charge"}),
          "discharge_battery",
-         "peak price and the battery has usable charge"),
+         "costly period and the battery has usable charge"),
+
+    Rule("peak_defer",
+         frozenset({"costly_period"}),
+         "avoid_starting_appliances",
+         "costly period, so do not start flexible appliances"),
+
+    Rule("occupied_reduce",
+         frozenset({"costly_period", "occupied"}),
+         "reduce_usage_advice",
+         "someone is home during a costly period, so suggest cutting usage"),
 
     Rule("night_charge",
          frozenset({"tariff_night", "has_battery", "battery_below_night_target"}),
@@ -75,14 +95,9 @@ RULES = [
          "cheap night rate and the battery is below its overnight target (room kept for tomorrow's solar)"),
 
     Rule("solar_charge",
-         frozenset({"tariff_day", "solar_generating", "has_battery", "battery_has_room"}),
+         frozenset({"solar_surplus", "has_battery", "battery_has_room"}),
          "charge_battery_solar",
-         "free solar is available and there is room in the battery"),
-
-    Rule("peak_defer",
-         frozenset({"tariff_peak"}),
-         "avoid_starting_appliances",
-         "peak price now, so do not start flexible appliances"),
+         "spare solar beyond the home's demand, with room in the battery"),
 
     Rule("quiet_no_noise",
          frozenset({"quiet_hours"}),
