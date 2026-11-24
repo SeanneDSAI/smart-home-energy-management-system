@@ -13,7 +13,10 @@ from src.knowledge_base import (
     appliances_of_type,
     price, hourly_value, 
     SLOTS_PER_DAY, 
-    load_knowledge_base)
+    load_knowledge_base
+    )
+
+from src.csp import time_slots, start_times, make_problem
 
 # Since the day is 48slots of 30mins, 1hr is 1.0, 30mins is 0.5
 SLOT_HOURS = 0.5 
