@@ -214,3 +214,26 @@ def select_variable(domains, assignment, use_mrv):
     if not use_mrv:
         return unplaced[0]
     return min(unplaced, key=lambda i: len(domains[i]))
+
+def forward_check(problem, domains, assignment):
+    """
+    After placing an appliance, look ahead: remove the starts of every
+    unplaced appliance that would now break the supply limit.
+    Returns the new domains, or None if some appliance has no start left
+    (a dead end, so the search can back up straight away).
+    """
+    new_domains = list(domains)
+    for j in range(len(domains)):
+        if j in assignment:
+            continue
+        kept = []
+        for start in domains[j]:
+            trial = dict(assignment)
+            trial[j] = start
+            if supply_ok(problem, trial):
+                kept.append(start)
+        if not kept:
+            return None
+        new_domains[j] = kept
+    return new_domains
+
