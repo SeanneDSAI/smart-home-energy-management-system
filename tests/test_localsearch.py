@@ -35,3 +35,9 @@ def test_random_state():
             if state[j] not in PROBLEM["domains"][j]:
                 raise AssertionError("Appliance is outside its time window")
         
+
+def test_cost():
+    result = cost(PROBLEM, BEST)
+
+    if round(result, 3) != BEST_COST:
+        raise AssertionError("Best schedule cost is incorrect")
