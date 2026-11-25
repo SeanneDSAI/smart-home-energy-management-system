@@ -24,13 +24,14 @@ BEST_COST = 9.816
 
 def test_random_state():
     random.seed(1)
-    
+    # Generate 50 scedhules to check if they are valid
     for i in range(50):
         state = random_state(PROBLEM)
         
         if len(state) != len(PROBLEM['names']):
             raise AssertionError("Wrong number of appliances")
         
+        # checking if every appliance starts at its allowed window
         for j in range(len(state)):
             if state[j] not in PROBLEM["domains"][j]:
                 raise AssertionError("Appliance is outside its time window")
@@ -39,5 +40,6 @@ def test_random_state():
 def test_cost():
     result = cost(PROBLEM, BEST)
 
+    #Checking if the cost matches my expexcted best value
     if round(result, 3) != BEST_COST:
         raise AssertionError("Best schedule cost is incorrect")
