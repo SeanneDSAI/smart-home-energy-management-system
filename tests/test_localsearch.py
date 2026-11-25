@@ -43,3 +43,16 @@ def test_cost():
     #Checking if the cost matches my expexcted best value
     if round(result, 3) != BEST_COST:
         raise AssertionError("Best schedule cost is incorrect")
+    
+    
+def test_quiet_hours_costs_more():
+    # Move the dishwasher to 05:00, which is inside quiet hours
+    noisy = [43, 10, 6, 4]
+
+    # calculate the cost of both schedules
+    noisy_cost = cost(PROBLEM, noisy)
+    best_cost = cost(PROBLEM, BEST)
+
+    # Check that running a noisy appliance during quiet hours adds a penalty
+    if noisy_cost <= best_cost + 10:
+        raise AssertionError("Quiet hours penalty is not working")
