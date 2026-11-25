@@ -15,3 +15,16 @@ from src.localsearch import (
     random_restarting_hillclimbing,
     simulated_annealing
 )
+
+KB = load_knowledge_base(os.path.join(ROOT, "data", "scenarios", "example"))
+PROBLEM = make_problem(KB)
+
+BEST = [43, 42, 6, 4]
+BEST_COST = 9.816
+
+def test_random_state():
+    random.seed(1)
+    
+    for i in range(50):
+        state = random_state(PROBLEM)
+        
