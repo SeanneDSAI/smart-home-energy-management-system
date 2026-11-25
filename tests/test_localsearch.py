@@ -28,3 +28,10 @@ def test_random_state():
     for i in range(50):
         state = random_state(PROBLEM)
         
+        if len(state) != len(PROBLEM['names']):
+            raise AssertionError("Wrong number of appliances")
+        
+        for j in range(len(state)):
+            if state[j] not in PROBLEM["domains"][j]:
+                raise AssertionError("Appliance is outside its time window")
+        
