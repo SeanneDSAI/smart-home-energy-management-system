@@ -74,3 +74,13 @@ def test_change_exactly_one_appliance():
         #only one appliance should change per neighbour
         if changes != 1:
             raise AssertionError("Neighbour should change one appliance")
+        
+
+def test_hill_climbing_never_returns_a_worse_schedule():
+    # Test hill climbing with 20 different starting schedules
+    for seed in range(20):
+        random.seed(seed)
+
+        start = random_state(PROBLEM)
+        result = hill_climbing(PROBLEM, start)
+
