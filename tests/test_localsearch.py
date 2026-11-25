@@ -56,3 +56,21 @@ def test_quiet_hours_costs_more():
     # Check that running a noisy appliance during quiet hours adds a penalty
     if noisy_cost <= best_cost + 10:
         raise AssertionError("Quiet hours penalty is not working")
+    
+    
+
+def test_change_exactly_one_appliance():
+    # Generate all neighbours of the best schedule
+    neighbours = generate_neighbours(PROBLEM, BEST)
+
+    for neighbour in neighbours:
+        changes = 0
+
+        # count how many appliances have different starting times
+        for i in range(len(BEST)):
+            if neighbour[i] != BEST[i]:
+                changes += 1
+
+        #only one appliance should change per neighbour
+        if changes != 1:
+            raise AssertionError("Neighbour should change one appliance")
