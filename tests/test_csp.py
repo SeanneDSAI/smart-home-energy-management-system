@@ -18,7 +18,9 @@ from src.csp import (
     running_slots,
     quiet_ok,
     load_per_slot,
-    supply_ok
+    supply_ok,
+    is_valid,
+    node_consistent_domains
 )
 
 # Load the example household scenario
@@ -137,6 +139,46 @@ def test_solar_reduces_grid_demand():
     assignment = {i: 24}
 
     assert supply_ok(problem, assignment) == True
+
+
+def test_valid_schedule():
+    schedule = [36, 40, 0, 4]
+
+    assert is_valid(PROBLEM, schedule) == True
+
+
+# Test that a schedule breaking an appliance deadline is rejected
+def test_invalid_deadline():
+    schedule = [36, 40, 13, 4]
+
+    assert is_valid(PROBLEM, schedule) == False
+
+
+# Test that a noisy appliance running during quiet hours is rejected
+def test_invalid_quiet_hours():
+    schedule = [46, 40, 0, 4]
+
+    assert is_valid(PROBLEM, schedule) == False
+
+
+# Test that invalid start times are removed from the domains 
+def test_node_consistent_domains():
+    domains = node_consistent_domains(PROBLEM)
+
+    i = PROBLEM["names"].index("washing_machine")
+    j = PROBLEM["names"].index("dishwasher")
+
+    assert domains[i] == list(range(36, 44))
+    assert domains[j] == [40, 41, 42]
+
+
+# Test that node consistency does not change the original domains
+def test_original_domains_unchanged():
+    original = [list(domain) for domain in PROBLEM["domains"]]
+
+    node_consistent_domains(PROBLEM)
+
+    assert PROBLEM["domains"] == original
 
 
 if __name__ == "__main__":
