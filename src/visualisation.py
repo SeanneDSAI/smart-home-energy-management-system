@@ -253,7 +253,6 @@ def make_all(kb, out_dir, restarts=20, schedules=None):
     if schedules:
         save_single(out("schedule_cost.png"), (8, 3), draw_cost, problem, schedules)
     plot_dashboard(kb, problem, sources, rows, schedules, out("dashboard.png"))
-    write_csv(rows, out("day_slots.csv"))
     return paths
 
 
