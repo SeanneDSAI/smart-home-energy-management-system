@@ -16,7 +16,9 @@ from src.csp import (
     start_times, 
     make_problem,
     running_slots,
-    quiet_ok
+    quiet_ok,
+    load_per_slot,
+    supply_ok
 )
 
 # Load the example household scenario
@@ -85,6 +87,56 @@ def test_quiet_hours_non_noisy_appliance():
 
     assert quiet_ok(PROBLEM, i, 46) == True
     assert quiet_ok(PROBLEM, i, 0) == True
+
+# Test electricity demand without any flexible appliances running
+def test_background_load():
+    load = load_per_slot(PROBLEM, {})
+
+    assert len(load) == 48  
+    assert load == PROBLEM["background"]
+
+
+# Test that appliance power is added to the background load 
+def test_appliance_load():
+    i = PROBLEM["names"].index("washing_machine")
+
+    assignment = {i: 36}
+    load = load_per_slot(PROBLEM, assignment)
+
+    assert abs(load[36] - 5.3) < 1e-9
+    assert abs(load[37] - 5.3) < 1e-9
+    assert abs(load[38] - 2.7) < 1e-9
+
+
+# Test that deand below the supply limit is accepted
+def test_supply_limit_valid():
+    i = PROBLEM["names"].index("ev_charger")
+
+    assignment = {i: 0}
+
+    assert supply_ok(PROBLEM, assignment) == True
+
+
+# Test that excessive electricity demand is rejected 
+def test_supply_limit_exceeded():
+    assignment = {}
+
+    for i in range(len(PROBLEM["names"])):
+        assignment[i] = 0
+
+    assert supply_ok(PROBLEM, assignment) == False
+
+
+# Test that solar generation reduces grid demand
+def test_solar_reduces_grid_demand():
+    problem = make_problem(KB)
+
+    i = problem["names"].index("ev_charger")
+    problem["supply_limit"] = 5.0
+
+    assignment = {i: 24}
+
+    assert supply_ok(problem, assignment) == True
 
 
 if __name__ == "__main__":
