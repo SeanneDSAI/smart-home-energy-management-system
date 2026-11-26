@@ -1,5 +1,7 @@
 # Smart Home Energy Management System (SHEMS)
 
+[![Tests](https://github.com/SeanneDSAI/smart-home-energy-management-system/actions/workflows/tests.yml/badge.svg)](https://github.com/SeanneDSAI/smart-home-energy-management-system/actions/workflows/tests.yml)
+
 Knowledge-driven AI system that schedules home appliances and battery use to cut electricity cost and carbon under time-of-use tariffs.
 
 **Module:** AINL3001 Knowledge-Driven AI · **Group:** Dream Team Wallahi
@@ -14,6 +16,8 @@ SHEMS decides **when to run flexible appliances** (dishwasher, washing machine, 
 
 See [proposal.md](proposal.md) for the full problem description and design.
 
+![SHEMS dashboard for the example scenario](images/dashboard.png)
+
 ## AI techniques
 
 | Technique | File | Status |
@@ -21,14 +25,18 @@ See [proposal.md](proposal.md) for the full problem description and design.
 | Knowledge representation (knowledge graph of devices, tariff, occupancy) | [src/knowledge_base.py](src/knowledge_base.py) | Done |
 | Rule-based expert system (forward chaining with explanations) | [src/rules.py](src/rules.py) | Done |
 | Slot-by-slot battery controller driven by the rules | [src/controller.py](src/controller.py) | Done |
+| Constraint satisfaction: constraint model and validity checks (time windows, quiet hours, supply limit) | [src/csp.py](src/csp.py) | Done |
 | Constraint satisfaction: backtracking with MRV and forward checking | [src/csp.py](src/csp.py) | In progress |
-| Local search: hill climbing / simulated annealing over cost + carbon | [src/localsearch.py](src/localsearch.py) | In progress |
+| Local search: random-restart hill climbing and simulated annealing over cost + carbon | [src/localsearch.py](src/localsearch.py) | Done |
+| Visualisation: charts and a one-page dashboard of the day | [src/visualisation.py](src/visualisation.py) | Done |
 
 ## Requirements
 
 - Python 3.10 or newer
-- No third-party packages are needed to run the code. Everything uses the standard library.
-- [pytest](https://pytest.org) is optional, for running the tests.
+- [matplotlib](https://matplotlib.org) for the charts and dashboard. Everything else uses the standard library.
+- [pytest](https://pytest.org) for running the tests.
+
+Both are in `requirements.txt`.
 
 ## Setup
 
@@ -48,6 +56,29 @@ pip install -r requirements.txt
 ## Usage
 
 Run every command from the repository root.
+
+### Interactive menu
+
+The easiest way to use SHEMS is the menu-driven CLI:
+
+```bash
+python main_cli.py                         # uses data/scenarios/example
+python main_cli.py data/scenarios/<name>   # any other scenario
+```
+
+| Option | What it does |
+|---|---|
+| `1` Show the scenario | Summarises the house, appliances, tariff, occupancy, solar and battery |
+| `2` Find the best schedule | Runs hill climbing and simulated annealing, compares them with a "run as early as possible" baseline, and prints the cheapest valid schedule |
+| `3` Run the battery controller | Runs the rule-based controller across the day (see below) |
+| `4` Make charts | Saves the charts to `images/` and can open them in a window |
+| `q` Quit | |
+
+The searches are random, but the CLI uses a fixed seed (`SEED = 1` in [main_cli.py](main_cli.py)), so every run gives the same results. That keeps the numbers in the report and the demo consistent.
+
+### Individual modules
+
+Each module can also be run on its own.
 
 **Summarise a scenario** (house, appliances, tariff, occupancy, solar and battery):
 
@@ -69,20 +100,40 @@ Example output:
 01:00  soc=  7.0 kWh  demand= 0.3 kW  -            quiet hours, so do not run noisy appliances
 ```
 
+> The controller does not yet take the scheduled flexible appliances into account. Its demand figures are the base load and fixed appliances only.
+
+**Make the charts and dashboard:**
+
+```bash
+python -m src.visualisation                                  # example scenario, saved to images/
+python -m src.visualisation data/scenarios/<name> <out_dir>  # any scenario and output folder
+```
+
+| File | Shows |
+|---|---|
+| `energy_use.png` | Household demand by source (stacked) under the optimised schedule, with solar generation and the supply limit |
+| `electricity_price.png` | Tariff price over the day |
+| `carbon_intensity.png` | Grid carbon intensity over the day |
+| `battery.png` | Battery state of charge and each controller action (only when the scenario has a battery) |
+| `schedule_cost.png` | Cost of the baseline compared with each search algorithm's schedule |
+| `dashboard.png` | All of the above on one page, with headline figures |
+The "cost" in these charts is a **cost score**: euros, plus a carbon term, plus penalties for broken constraints. It is good for comparing schedules but is not the actual bill.
+
 ## Tests
 
 ```bash
-python tests/test_knowledge_base.py
-python tests/test_rules.py
-
-# or, with pytest installed
 pytest
 ```
+
+Tests cover the knowledge base, the rules, the CLI and the visualisation. They run automatically on GitHub Actions (Python 3.10 and 3.12) for every push and pull request to `main`.
 
 ## Project structure
 
 ```text
 smart-home-energy-management-system/
+├── .github/
+│   └── workflows/
+│       └── tests.yml         # runs pytest on GitHub Actions
 ├── data/
 │   └── scenarios/
 │       └── example/          # one scenario = four JSON files
@@ -90,13 +141,20 @@ smart-home-energy-management-system/
 │           ├── home.json
 │           ├── occupancy.json
 │           └── tariff.json
+├── images/                   # charts and dashboard written by src/visualisation.py
 ├── src/
 │   ├── knowledge_base.py     # loads scenarios, knowledge graph, queries, facts per slot
 │   ├── rules.py              # rule set and forward chaining
 │   ├── controller.py         # runs the rules across the day, manages the battery
-│   ├── csp.py                # CSP scheduler for flexible appliances
-│   └── localsearch.py        # cost + carbon optimisation
+│   ├── csp.py                # CSP model and constraint checks for flexible appliances
+│   ├── localsearch.py        # hill climbing and simulated annealing over cost + carbon
+│   └── visualisation.py      # charts and dashboard
 ├── tests/
+│   ├── test_cli.py
+│   ├── test_knowledge_base.py
+│   ├── test_rules.py
+│   └── test_visualisation.py
+├── main_cli.py               # interactive menu
 ├── proposal.md
 ├── requirements.txt
 └── README.md
