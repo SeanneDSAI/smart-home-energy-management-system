@@ -20,7 +20,9 @@ from src.csp import (
     load_per_slot,
     supply_ok,
     is_valid,
-    node_consistent_domains
+    node_consistent_domains,
+    select_variable,
+    forward_check
 )
 
 # Load the example household scenario
@@ -179,6 +181,76 @@ def test_original_domains_unchanged():
     node_consistent_domains(PROBLEM)
 
     assert PROBLEM["domains"] == original
+
+
+# Test that MRV selects the appliance with the fewest available slots
+def test_mrv_selection():
+    domains = node_consistent_domains(PROBLEM)
+
+    selected = select_variable(domains, {}, True)
+
+    i = PROBLEM["names"].index("dishwasher")
+
+    assert selected == i
+
+
+# Test variable selection when MRV is disabled 
+def test_selection_without_mrv():
+    domains = node_consistent_domains(PROBLEM)
+
+    selected = select_variable(domains, {}, False)
+
+    assert selected == 0 
+
+
+# Test that MRV does not select an appliance already assigned 
+def test_mrv_skips_assigned():
+    domains = node_consistent_domains(PROBLEM)
+
+    i = PROBLEM["names"].index("dishwasher")
+    assignment = {i: 40}
+
+    selected = select_variable(domains, assignment, True)
+
+    assert selected != 1
+    assert selected == PROBLEM["names"].index("washing_machine")
+
+
+# Test that forward checking removes conflicting start times 
+def test_forward_check():
+    problem = make_problem(KB)
+    problem["supply_limit"] = 8.0
+
+    domains = node_consistent_domains(problem)
+
+    i = problem["names"].index("ev_charger")
+    j = problem["names"].index("immersion_heater")
+
+    assignment = {i: 0}
+
+    new_domains = forward_check(problem, domains, assignment)
+
+    assert new_domains is not None 
+    assert 0 not in new_domains[j]
+    assert 5 not in new_domains[j]
+    assert 6 in new_domains[j]
+
+
+# Test that forward checking detects when no valid starts remain
+def test_forward_check_dead_end():
+    problem = make_problem(KB)
+    problem["supply_limit"] = 8.0
+
+    domains = node_consistent_domains(problem)
+
+    i = problem["names"].index("ev_charger")
+    j = problem["names"].index("immersion_heater")
+
+    domains[j] = [0]
+
+    assignment = {i: 0}
+
+    assert forward_check(problem, domains, assignment) is None
 
 
 if __name__ == "__main__":
