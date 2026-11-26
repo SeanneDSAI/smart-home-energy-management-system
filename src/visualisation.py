@@ -9,7 +9,6 @@ Visualisation: charts of one simulated day, saved as PNG files in images/.
                          (only when the scenario has a battery)
   schedule_cost.png      daily cost of the baseline vs the optimised schedules
   dashboard.png          all of the above on one page
-  day_slots.csv          the numbers behind the charts, one row per slot
 
 Each chart is drawn by one draw_* function that paints onto an axis, so the same
 code makes both the single-chart PNG and its panel in the dashboard.
@@ -103,14 +102,6 @@ def day_data(kb, schedule):
                     "battery_action": battery_log[s]["battery_action"] or ""})
         rows.append(row)
     return problem, sources, rows
-
-
-def write_csv(rows, path):
-    with open(path, "w", newline="") as file:
-        writer = csv.DictWriter(file, fieldnames=list(rows[0]))
-        writer.writeheader()
-        writer.writerows(rows)
-
 
 # ---------------------------------------------------------------------------
 # Charts: each draw_* function paints onto an axis it is given
