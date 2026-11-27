@@ -283,3 +283,26 @@ def backtracking_search(problem, limit=1, use_mrv=True, use_forward_checking=Tru
 
     backtrack(problem, domains, {}, search)
     return search["found"], search["nodes"]
+
+
+def schedule_to_times(problem, schedule):
+    """{'washing_machine': ('21:30', '23:00'), ...} - start and finish times."""
+    times = {}
+    for i, start in enumerate(schedule):
+        finish = start + problem["duration"][i]
+        times[problem["names"][i]] = (time_slots(start), time_slots(finish))
+    return times
+
+
+if __name__ == "__main__":
+    here = os.path.dirname(os.path.abspath(__file__))
+    kb = load_knowledge_base(os.path.join(here, "..", "data", "scenarios", "example"))
+    problem = make_problem(kb)
+
+    schedules, nodes = backtracking_search(problem)
+    print("First valid schedule (found after", nodes, "search nodes):")
+    for name, (start, finish) in schedule_to_times(problem, schedules[0]).items():
+        print(f"  {name:<18} {start} - {finish}")
+
+    every, nodes = backtracking_search(problem, limit=None)
+    print(len(every), "valid schedules in total (", nodes, "search nodes )")

@@ -155,6 +155,11 @@ def simulated_annealing(problem, start_state):
     temp = START_TEMP
 
     while temp > STOP_TEMP:
+
+        neighbours = generate_neighbours(problem, current)
+        if not neighbours:
+            return current      
+
         neighbour = random.choice(generate_neighbours(problem, current))
         delta = cost(problem, neighbour) - cost(problem, current)
 
