@@ -3,6 +3,7 @@ Unit tests for src/knowledge_base.py. Run from the repository root:
     python tests/test_knowledge_base.py
 """
 
+import copy
 import json
 import os
 import shutil
@@ -125,6 +126,14 @@ def test_bad_hourly_profiles_rejected():
             continue
         raise AssertionError("%r should have been rejected" % (bad,))
     assert _hourly({}, "solar_kw_hourly", "home.json", default=[0] * 24) == [0] * 24
+
+
+def test_describe_kb_battery_without_efficiency():
+    # The controller treats a missing efficiency as 1.0, but describe_kb used to
+    # crash with a KeyError on it. It should now show the battery as 100% efficient.
+    kb = copy.deepcopy(KB)
+    del kb["graph"]["battery"]["efficiency"]
+    assert "100% efficient" in describe_kb(kb)
 
 
 def test_slot_to_time():

@@ -1,3 +1,11 @@
+"""
+Tests for src/visualisation.py: the per-slot day data, demand split by source
+(including runs that wrap past midnight) and that every chart file is written.
+Uses matplotlib's non-interactive Agg backend so no windows open.
+Run from the repository root:
+    pytest tests/test_visualisation.py
+"""
+
 import os
 import sys
 

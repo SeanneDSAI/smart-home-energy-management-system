@@ -1,3 +1,22 @@
+"""
+Local search for SHEMS: find a cheap schedule for the flexible appliances.
+
+A state is a list of start slots, one per appliance, each taken from that
+appliance's CSP domain (src.csp.make_problem). The cost of a state is
+
+    W_MONEY * money + W_CARBON * carbon + W_PENALTY * violations
+
+where violations are grid draw above the supply limit plus noisy appliances
+running in quiet hours. A neighbour moves ONE appliance to a different start.
+
+Algorithms:
+  - hill_climbing                     (steepest descent to a local minimum)
+  - random_restarting_hillclimbing    (best of several random starts)
+  - simulated_annealing               (bonus, for comparison)
+
+Run a quick manual check from the repository root with:  python -m src.localsearch
+"""
+
 #Importing libraries
 import math
 import random 
@@ -160,7 +179,7 @@ def simulated_annealing(problem, start_state):
         if not neighbours:
             return current      
 
-        neighbour = random.choice(generate_neighbours(problem, current))
+        neighbour = random.choice(neighbours)
         delta = cost(problem, neighbour) - cost(problem, current)
 
         # always accept an improvement; accept a worse move with probability e^(-delta/T)

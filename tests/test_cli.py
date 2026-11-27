@@ -1,3 +1,10 @@
+"""
+Tests for main_cli.py: drive the interactive menu with scripted input and
+check each option prints what it should.
+Run from the repository root:
+    pytest tests/test_cli.py
+"""
+
 import os
 import sys
 
