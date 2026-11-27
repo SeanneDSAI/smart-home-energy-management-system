@@ -51,10 +51,10 @@ def test_multiple_random_states():
     for _ in range(20):
         state = random_state(PROBLEM)
 
-    assert len(state) == len(PROBLEM["names"])
+        assert len(state) == len(PROBLEM["names"])
 
-    for i in range(len(state)):
-        assert state[i] in PROBLEM["domains"][i]
+        for i in range(len(state)):
+            assert state[i] in PROBLEM["domains"][i]
 
 
 # Test that electricity cost is calculated correctly 
@@ -222,40 +222,6 @@ def test_hill_climbing_local_minimum():
 
     for neighbour in neighbours:
         assert cost(PROBLEM, neighbour) >= final_cost
-
-
-# Test that hill climbing does not change the original schedule
-def test_hill_climbing_original_state():
-    state = [36, 40, 0, 4]
-    original = list(state)
-
-    hill_climbing(PROBLEM, state)
-
-    assert state == original
-
-
-# Test that random-restart hill climbing returns a complete schedule
-def test_random_restart_schedule():
-    random.seed(42)
-
-    result = random_restarting_hillclimbing(PROBLEM, restarts=5)
-
-    assert result is not None
-    assert len(result) == len(PROBLEM["names"])
-
-    for i in range(len(result)):
-        assert result[i] in PROBLEM["domains"][i]
-
-
-# Test that multiple restarts perform at least as well as one restart
-def test_random_restart_cost():
-    random.seed(42)
-    single = random_restarting_hillclimbing(PROBLEM, restarts=1)
-
-    random.seed(42)
-    multiple = random_restarting_hillclimbing(PROBLEM, restarts=5)
-
-    assert cost(PROBLEM, multiple) <= cost(PROBLEM, single)
 
 
 # Test that hill climbing does not change the original schedule
