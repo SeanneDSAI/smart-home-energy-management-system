@@ -22,7 +22,8 @@ from src.csp import (
     is_valid,
     node_consistent_domains,
     select_variable,
-    forward_check
+    forward_check,
+    backtracking_search
 )
 
 # Load the example household scenario
@@ -251,6 +252,65 @@ def test_forward_check_dead_end():
     assignment = {i: 0}
 
     assert forward_check(problem, domains, assignment) is None
+
+
+# Test that backtracking finds a complete and valid schedule
+def test_backtracking_valid_schedule():
+        schedules, nodes = backtracking_search(PROBLEM)
+
+        assert len(schedules) == 1
+        assert len(schedules[0]) == len(PROBLEM["names"])        
+        assert is_valid(PROBLEM, schedules[0])
+        assert nodes > 0
+
+
+# Test that backtracking can find multiple valid schedules 
+def test_backtracking_multiple_schedules():
+    schedules, nodes = backtracking_search(PROBLEM, limit=5)
+
+    assert len(schedules) == 5
+
+    for schedule in schedules:
+        assert len(schedule) == len(PROBLEM["names"])
+        assert is_valid(PROBLEM, schedule)
+
+
+# Test that backtracking works without MRV and forward checking
+def test_backtracking_without_heuristics():
+    schedules, nodes = backtracking_search(
+        PROBLEM,
+        use_mrv=False,
+        use_forward_checking=False
+    )
+
+    assert len(schedules) == 1
+    assert len(schedules[0]) == len(PROBLEM["names"])
+    assert is_valid(PROBLEM, schedules[0])
+    assert nodes > 0
+
+
+# Test that no schedule is returned when the supply limit is too low 
+def test_impossible_schedule():
+    problem = make_problem(KB)
+
+    problem["supply_limit"] = 5.0 
+    problem["solar"] = [0] * 48
+    schedules, nodes = backtracking_search(problem)
+
+    assert schedules == []
+
+
+# Test that backtracking detects an appliance with no available start times
+def test_empty_domain():
+    problem = make_problem(KB)
+
+    i = problem["names"].index("washing_machine")
+    problem["domains"][i] = []
+
+    schedules, nodes = backtracking_search(problem)
+
+    assert schedules == []
+    assert nodes == 0
 
 
 if __name__ == "__main__":
