@@ -114,6 +114,73 @@ def test_controller_full_day():
     for i in range(len(results)):
         assert results[i]["slot"] == i
 
+# Test that the battery charges from the grid at night
+def test_night_grid_charging():
+    results = run_day(KB)
+
+    assert results[0]["battery_action"] == "charge_grid"
+    assert results[0]["soc_kwh"] == 6.25
+
+
+# Test that overnight charging stops at the target
+def test_night_charge_target():
+    results = run_day(KB)
+
+    assert results[1]["soc_kwh"] == 7.0
+    assert results[2]["battery_action"] is None
+    assert results[2]["soc_kwh"] == 7.0
+
+
+# Test that the battery discharges during peak hours
+def test_peak_battery_discharge():
+    results = run_day(KB)
+
+    for row in results:
+        if row["battery_action"] == "discharge":
+            assert KB["tariff"][row["slot"]] == "peak"
+
+    assert any(row["battery_action"] == "discharge"
+               for row in results)
+
+
+# Test that battery actions correctly change the stored energy
+def test_battery_charge_changes():
+    results = run_day(KB)
+
+    previous = KB["graph"]["battery"]["initial_charge_kwh"]
+
+    for row in results:
+        current = row["soc_kwh"]
+        action = row["battery_action"]
+
+        if action == "charge_grid" or action == "charge_solar":
+            assert current >= previous
+
+        elif action == "discharge":
+            assert current <= previous
+
+        else:
+            assert current == previous
+
+        previous = current
+
+
+# Test that the controller works without a battery
+def test_controller_without_battery():
+    kb = load_knowledge_base(
+        os.path.join(ROOT, "data", "scenarios", "example")
+    )
+
+    del kb["graph"]["battery"]
+
+    results = run_day(kb)
+
+    assert len(results) == 48
+
+    for row in results:
+        assert row["battery_action"] is None
+        assert row["soc_kwh"] == 0
+
 
 if __name__ == "__main__":
     tests = [t for name, t in sorted(globals().items()) if name.startswith("test_")]
