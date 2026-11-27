@@ -8,12 +8,11 @@ Visualisation: charts of one simulated day, saved as PNG files in images/.
   battery.png            battery state of charge and the controller's actions
                          (only when the scenario has a battery)
   schedule_cost.png      daily cost of the baseline vs the optimised schedules
-  day_slots.csv          the numbers behind the charts, one row per slot
+  dashboard.png          all of the above on one page
 
-Needs matplotlib (pip install matplotlib). Run from the repository root:
+Each chart is drawn by one draw_* function that paints onto an axis, so the same
+code makes both the single-chart PNG and its panel in the dashboard.
 
-    python -m src.visualisation                                  # example scenario -> images/
-    python -m src.visualisation data/scenarios/<name> <out folder>
 """
 
 import csv
@@ -42,7 +41,7 @@ ACTION_LABELS = {"charge_grid": "Charge from grid",
 
 # x axis for every time chart: the hour each slot starts at (0, 0.5, 1, ... 23.5)
 HOURS = [s * SLOT_HOURS for s in range(SLOTS_PER_DAY)]
-HOUR_TICKS = range(0, 25, 3)
+HOUR_TICKS = list(range(0, 25, 3))
 HOUR_LABELS = ["%02d:00" % h for h in HOUR_TICKS]
 
 
@@ -78,6 +77,11 @@ def solve_all(problem, restarts=20):
     }
 
 
+def schedule_costs(problem, schedules):
+    """{schedule name: cost score}."""
+    return {name: cost(problem, schedule) for name, schedule in schedules.items()}
+
+
 def day_data(kb, schedule):
     """One dict per slot with demand, solar, grid import, price, carbon and battery."""
     problem = make_problem(kb)
@@ -99,124 +103,122 @@ def day_data(kb, schedule):
         rows.append(row)
     return problem, sources, rows
 
-
-def write_csv(rows, path):
-    with open(path, "w", newline="") as file:
-        writer = csv.DictWriter(file, fieldnames=list(rows[0]))
-        writer.writeheader()
-        writer.writerows(rows)
-
-
 # ---------------------------------------------------------------------------
-# Charts
+# Charts: each draw_* function paints onto an axis it is given
 # ---------------------------------------------------------------------------
 
-def plot_energy_use(problem, sources, rows, path):
+def time_axis(ax, title, ylabel):
+    """Shared look for every chart that runs across the day."""
+    ax.set_title(title, loc="left", fontweight="bold")
+    ax.set_xlabel("Time of day")
+    ax.set_ylabel(ylabel)
+    ax.set_xlim(0, 24)
+    ax.set_xticks(HOUR_TICKS)
+    ax.set_xticklabels(HOUR_LABELS)
+    ax.grid(axis="y", alpha=0.3)
+
+
+def draw_energy(ax, problem, sources, rows):
     """Demand by source as stacked bars, with solar and the supply limit."""
-    plt.figure(figsize=(11, 5))
-
     bottom = [0.0] * SLOTS_PER_DAY
     for colour, (name, load) in zip(COLOURS, sources.items()):
-        plt.bar(HOURS, load, width=SLOT_HOURS, bottom=bottom, align="edge",
-                color=colour, edgecolor="white", label=name)
+        ax.bar(HOURS, load, width=SLOT_HOURS, bottom=bottom, align="edge",
+               color=colour, edgecolor="white", label=name)
         bottom = [b + v for b, v in zip(bottom, load)]
-
-    solar = [r["solar_kw"] for r in rows]
-    plt.step(HOURS, solar, where="post", color="black", linewidth=2, label="Solar generation")
-    plt.axhline(problem["supply_limit"], color="grey", linestyle="--",
-                label="Supply limit (%.0f kW)" % problem["supply_limit"])
-
-    plt.title("Energy use over the day")
-    plt.xlabel("Time of day")
-    plt.ylabel("Power (kW)")
-    plt.xticks(HOUR_TICKS, HOUR_LABELS)
-    plt.xlim(0, 24)
-    plt.grid(axis="y", alpha=0.3)
-    plt.legend(loc="upper left", fontsize=8)
-    plt.tight_layout()
-    plt.savefig(path, dpi=150)
-    plt.close()
+    ax.step(HOURS + [24], [r["solar_kw"] for r in rows] + [0], where="post",
+            color="black", linewidth=2, label="Solar generation")
+    ax.axhline(problem["supply_limit"], color="grey", linestyle="--",
+               label="Supply limit (%.0f kW)" % problem["supply_limit"])
+    time_axis(ax, "Energy use over the day", "Power (kW)")
+    ax.legend(loc="upper left", fontsize=8)
 
 
-def plot_price(rows, path):
-    """Electricity price over the day."""
-    price = [r["price_eur_per_kwh"] for r in rows]
-    plt.figure(figsize=(11, 3))
-    plt.step(HOURS + [24], price + [price[-1]], where="post", color=COLOURS[0], linewidth=2)
-    plt.title("Electricity price")
-    plt.xlabel("Time of day")
-    plt.ylabel("EUR per kWh")
-    plt.xticks(HOUR_TICKS, HOUR_LABELS)
-    plt.xlim(0, 24)
-    plt.ylim(0, max(price) * 1.2)
-    plt.grid(axis="y", alpha=0.3)
-    plt.tight_layout()
-    plt.savefig(path, dpi=150)
-    plt.close()
+def draw_step(ax, rows, column, title, ylabel):
+    """A value that holds steady for each half hour (price, carbon)."""
+    values = [r[column] for r in rows]
+    ax.step(HOURS + [24], values + [values[-1]], where="post", color=COLOURS[0], linewidth=2)
+    time_axis(ax, title, ylabel)
+    ax.set_ylim(0, max(values) * 1.2)
 
 
-def plot_carbon(rows, path):
-    """Grid carbon intensity over the day."""
-    carbon = [r["carbon_g_per_kwh"] for r in rows]
-    plt.figure(figsize=(11, 3))
-    plt.step(HOURS + [24], carbon + [carbon[-1]], where="post", color=COLOURS[0], linewidth=2)
-    plt.title("Grid carbon intensity")
-    plt.xlabel("Time of day")
-    plt.ylabel("g CO2 per kWh")
-    plt.xticks(HOUR_TICKS, HOUR_LABELS)
-    plt.xlim(0, 24)
-    plt.ylim(0, max(carbon) * 1.2)
-    plt.grid(axis="y", alpha=0.3)
-    plt.tight_layout()
-    plt.savefig(path, dpi=150)
-    plt.close()
+def draw_price(ax, rows):
+    draw_step(ax, rows, "price_eur_per_kwh", "Electricity price", "EUR per kWh")
 
 
-def plot_battery(kb, rows, path):
+def draw_carbon(ax, rows):
+    draw_step(ax, rows, "carbon_g_per_kwh", "Grid carbon intensity", "g CO2 per kWh")
+
+
+def draw_battery(ax, kb, rows):
     """Battery state of charge, with a marker for each action the controller takes."""
-    battery = kb["graph"]["battery"]
+    time_axis(ax, "Battery state of charge", "Stored energy (kWh)")
+    battery = kb["graph"].get("battery")
+    if not battery:
+        ax.text(12, 0.5, "No battery in this scenario", ha="center")
+        return
     ends = [h + SLOT_HOURS for h in HOURS]      # the charge is recorded at the end of each slot
     soc = [r["battery_soc_kwh"] for r in rows]
 
-    plt.figure(figsize=(11, 4))
-    plt.plot(ends, soc, color=COLOURS[0], linewidth=2, label="Charge level")
+    ax.plot(ends, soc, color=COLOURS[0], linewidth=2, label="Charge level")
     for colour, (action, label) in zip(COLOURS[1:], ACTION_LABELS.items()):
-        xs = [ends[s] for s in range(SLOTS_PER_DAY) if rows[s]["battery_action"] == action]
-        ys = [soc[s] for s in range(SLOTS_PER_DAY) if rows[s]["battery_action"] == action]
-        plt.scatter(xs, ys, color=colour, zorder=3, label=label)
-    plt.axhline(battery["capacity_kwh"], color="grey", linestyle="--", label="Capacity")
-    plt.axhline(battery["min_charge_kwh"], color="grey", linestyle=":", label="Reserve")
-
-    plt.title("Battery state of charge")
-    plt.xlabel("Time of day")
-    plt.ylabel("Stored energy (kWh)")
-    plt.xticks(HOUR_TICKS, HOUR_LABELS)
-    plt.xlim(0, 24)
-    plt.ylim(0, battery["capacity_kwh"] * 1.15)
-    plt.grid(axis="y", alpha=0.3)
-    plt.legend(loc="lower left", fontsize=8)
-    plt.tight_layout()
-    plt.savefig(path, dpi=150)
-    plt.close()
+        picked = [s for s in range(SLOTS_PER_DAY) if rows[s]["battery_action"] == action]
+        ax.scatter([ends[s] for s in picked], [soc[s] for s in picked],
+                   color=colour, zorder=3, label=label)
+    ax.axhline(battery["capacity_kwh"], color="grey", linestyle="--", label="Capacity")
+    ax.axhline(battery["min_charge_kwh"], color="grey", linestyle=":", label="Reserve")
+    ax.set_ylim(0, battery["capacity_kwh"] * 1.15)
+    ax.legend(loc="lower left", fontsize=8)
 
 
-def plot_schedule_cost(problem, schedules, path):
+def draw_cost(ax, problem, schedules):
     """Horizontal bar per schedule, with its cost written next to the bar."""
-    names = list(schedules)
-    costs = [cost(problem, schedules[n]) for n in names]
+    ax.set_title("Daily cost by schedule", loc="left", fontweight="bold")
+    if not schedules:
+        ax.text(0.5, 0.5, "No flexible appliances to schedule", ha="center")
+        return
+    costs = schedule_costs(problem, schedules)
+    ax.barh(list(costs), list(costs.values()), color=COLOURS[0])
+    for i, c in enumerate(costs.values()):
+        ax.text(c, i, "  %.3f" % c, va="center")
+    ax.invert_yaxis()                           # first schedule on top
+    ax.set_xlabel("Cost score (EUR + carbon + constraint penalties)")
+    ax.set_xlim(0, max(costs.values()) * 1.2)
+    ax.grid(axis="x", alpha=0.3)
 
-    plt.figure(figsize=(8, 3))
-    plt.barh(names, costs, color=COLOURS[0])
-    for i, c in enumerate(costs):
-        plt.text(c, i, "  %.3f" % c, va="center")
-    plt.gca().invert_yaxis()                    # first schedule on top
-    plt.title("Daily cost by schedule")
-    plt.xlabel("Cost score (EUR + carbon + constraint penalties)")
-    plt.xlim(0, max(costs) * 1.15)
-    plt.grid(axis="x", alpha=0.3)
-    plt.tight_layout()
-    plt.savefig(path, dpi=150)
-    plt.close()
+
+def save_single(path, size, draw, *args):
+    """One chart on its own figure, saved as a PNG."""
+    fig, ax = plt.subplots(figsize=size)
+    draw(ax, *args)
+    fig.tight_layout()
+    fig.savefig(path, dpi=150)
+    plt.close(fig)
+
+
+def plot_dashboard(kb, problem, sources, rows, schedules, path):
+    """One page: energy use across the top, then price and carbon, then the
+    battery and the schedule costs, under a headline with the key numbers."""
+    fig = plt.figure(figsize=(16, 13))
+    grid = fig.add_gridspec(3, 2, height_ratios=[1.4, 1, 1])
+    draw_energy(fig.add_subplot(grid[0, :]), problem, sources, rows)
+    draw_price(fig.add_subplot(grid[1, 0]), rows)
+    draw_carbon(fig.add_subplot(grid[1, 1]), rows)
+    draw_battery(fig.add_subplot(grid[2, 0]), kb, rows)
+    draw_cost(fig.add_subplot(grid[2, 1]), problem, schedules)
+
+    used = sum(r["total_demand_kw"] for r in rows) * SLOT_HOURS
+    from_grid = sum(r["grid_import_kw"] for r in rows) * SLOT_HOURS
+    headline = "%.1f kWh used  |  %.1f kWh from the grid after solar" % (used, from_grid)
+    if schedules:
+        values = list(schedule_costs(problem, schedules).values())
+        saving = values[0] - min(values[1:] or values)
+        headline += "  |  best schedule saves %.2f (%.0f%%) on the baseline" % (
+            saving, 100 * saving / values[0])
+    fig.suptitle("SHEMS dashboard\n" + headline, fontsize=14, fontweight="bold")
+
+    fig.tight_layout()
+    fig.savefig(path, dpi=150)
+    plt.close(fig)
 
 
 # ---------------------------------------------------------------------------
@@ -231,7 +233,8 @@ def make_all(kb, out_dir, restarts=20, schedules=None):
     problem = make_problem(kb)
     if problem["names"]:
         schedules = schedules or solve_all(problem, restarts)
-        best = min(list(schedules.values())[1:], key=lambda s: cost(problem, s))
+        candidates = list(schedules.values())[1:] or list(schedules.values())
+        best = min(candidates, key=lambda s: cost(problem, s))
     else:
         schedules, best = {}, []
     problem, sources, rows = day_data(kb, best)
@@ -242,14 +245,14 @@ def make_all(kb, out_dir, restarts=20, schedules=None):
         paths.append(os.path.join(out_dir, name))
         return paths[-1]
 
-    plot_energy_use(problem, sources, rows, out("energy_use.png"))
-    plot_price(rows, out("electricity_price.png"))
-    plot_carbon(rows, out("carbon_intensity.png"))
+    save_single(out("energy_use.png"), (11, 5), draw_energy, problem, sources, rows)
+    save_single(out("electricity_price.png"), (11, 3), draw_price, rows)
+    save_single(out("carbon_intensity.png"), (11, 3), draw_carbon, rows)
     if "battery" in kb["graph"]:
-        plot_battery(kb, rows, out("battery.png"))
+        save_single(out("battery.png"), (11, 4), draw_battery, kb, rows)
     if schedules:
-        plot_schedule_cost(problem, schedules, out("schedule_cost.png"))
-    write_csv(rows, out("day_slots.csv"))
+        save_single(out("schedule_cost.png"), (8, 3), draw_cost, problem, schedules)
+    plot_dashboard(kb, problem, sources, rows, schedules, out("dashboard.png"))
     return paths
 
 
