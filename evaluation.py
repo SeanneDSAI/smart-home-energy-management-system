@@ -114,6 +114,81 @@ def evaluate_csp(problem):
         print(f"{name:<28} {len(schedules):>10} {nodes:>10} {elapsed:>12.3f} {str(valid):>8}")
 
 
+# Check that a schedule is complete and satisfies the constraints
+def check_schedule(problem, schedule):
+    if schedule is None:
+        return False
+
+    if len(schedule) != len(problem["names"]):
+        return False
+
+    return is_valid(problem, schedule)
+
+
+# Compare local search algorithms over multiple runs
+def evaluate_local_search(problem, runs=10):
+
+    print("\nLocal Search Performance Comparison")
+    print("-" * 85)
+
+    algorithms = [
+        "Earliest start",
+        "Random schedule",
+        "Hill climbing",
+        "Random restart",
+        "Simulated annealing"
+    ]
+
+    print(f"{'Algorithm':<24} {'Avg Cost':>10} {'Best Cost':>10} {'Time (ms)':>12} {'Valid %':>10}")
+
+    for name in algorithms:
+
+        scores = []
+        times = []
+        valid_count = 0
+
+        for run in range(runs):
+
+            random.seed(SEED + run)
+            initial = random_state(problem)
+
+            start = time.perf_counter()
+
+            if name == "Earliest start":
+                schedule = [domain[0] for domain in problem["domains"]]
+
+            elif name == "Random schedule":
+                schedule = list(initial)
+
+            elif name == "Hill climbing":
+                schedule = hill_climbing(problem, initial)
+
+            elif name == "Random restart":
+                random.seed(SEED + run)
+                schedule = random_restarting_hillclimbing(
+                    problem, restarts=20
+                )
+
+            elif name == "Simulated annealing":
+                schedule = simulated_annealing(problem, initial)
+
+            elapsed = (time.perf_counter() - start) * 1000
+
+            scores.append(cost(problem, schedule))
+            times.append(elapsed)
+
+            if check_schedule(problem, schedule):
+                valid_count += 1
+
+        average_cost = sum(scores) / runs
+        best_cost = min(scores)
+        average_time = sum(times) / runs
+        valid_percentage = (valid_count / runs) * 100
+
+        print(f"{name:<24} {average_cost:>10.3f} {best_cost:>10.3f} {average_time:>12.3f} {valid_percentage:>9.1f}%")
+
+
+
 def main():
     for name in SCENARIOS:
         problem = load_scenario(name)
@@ -121,6 +196,8 @@ def main():
         show_scenario(name, problem)
 
         evaluate_csp(problem)
+
+        evaluate_local_search(problem)
 
 
 if __name__ == "__main__":
