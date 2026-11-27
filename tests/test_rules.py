@@ -12,7 +12,8 @@ sys.path.insert(0, ROOT)
 
 from src.rules import RULES, forward_chain                 # noqa: E402
 from src.knowledge_base import load_knowledge_base          # noqa: E402
-from src.controller import run_day                          # noqa: E402
+from src.controller import run_day, household_demand_kw                          
+# noqa: E402
 
 KB = load_knowledge_base(os.path.join(ROOT, "data", "scenarios", "example"))
 
@@ -83,6 +84,35 @@ def test_state_of_charge_stays_within_limits():
     battery = KB["graph"]["battery"]
     for row in run_day(KB):
         assert battery["min_charge_kwh"] - 1e-6 <= row["soc_kwh"] <= battery["capacity_kwh"] + 1e-6
+
+# Test household demand when no fixed appliances are running
+def test_background_demand():
+    demand = household_demand_kw(KB, 0)
+
+    assert abs(demand - 0.3) < 1e-9
+
+
+# Test household demand when the oven is running
+def test_fixed_appliance_demand():
+    assert abs(household_demand_kw(KB, 36) - 3.3) < 1e-9
+    assert abs(household_demand_kw(KB, 37) - 3.3) < 1e-9
+
+
+# Test that oven demand is removed after it finishes
+def test_fixed_appliance_finished():
+    demand = household_demand_kw(KB, 38)
+
+    assert abs(demand - 0.7) < 1e-9
+
+
+# Test that the controller produces results for all 48 slots
+def test_controller_full_day():
+    results = run_day(KB)
+
+    assert len(results) == 48
+
+    for i in range(len(results)):
+        assert results[i]["slot"] == i
 
 
 if __name__ == "__main__":
