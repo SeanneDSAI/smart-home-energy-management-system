@@ -1,0 +1,196 @@
+
+==================================================
+Scenario: example
+==================================================
+Supply limit: 12.0 kW
+Flexible appliances: 4
+Maximum solar generation: 3.5 kW
+
+Appliance domain sizes:
+washing_machine - 24 possible start times
+dishwasher - 19 possible start times
+immersion_heater - 13 possible start times
+ev_charger - 20 possible start times
+
+CSP Performance Comparison
+---------------------------------------------------------------------------
+Algorithm                     Solutions      Nodes    Time (ms)    Valid
+Backtracking                        100        108        0.998     True
+Backtracking + MRV                  100        108        0.946     True
+Backtracking + FC                   100        108        1.893     True
+Backtracking + MRV + FC             100        108        1.890     True
+
+Local Search Performance Comparison
+-------------------------------------------------------------------------------------
+Algorithm                  Avg Cost  Best Cost    Time (ms)    Valid %
+Earliest start               13.553     13.553        0.000     100.0%
+Random schedule              59.149     39.336        0.000       0.0%
+Hill climbing                 9.816      9.816        3.173     100.0%
+Random restart                9.816      9.816       65.373     100.0%
+Simulated annealing           9.820      9.816        5.668     100.0%
+
+Energy Performance Comparison
+-------------------------------------------------------------------------------------
+Algorithm                  Cost (EUR)     CO2 (kg)   Grid (kWh)    Valid
+Earliest start                 12.608       11.389       38.400     True
+Random restart                  9.088        8.772       38.400     True
+Simulated annealing             9.088        8.802       38.400     True
+
+Optimal Solution Comparison
+---------------------------------------------------------------------------
+Total valid schedules: 6240
+Search nodes visited: 6580
+Exhaustive search time: 133.549 ms
+Optimal objective score: 9.816
+
+Algorithm                     Score        Gap    Optimal
+Hill climbing                 9.816   0.000000       True
+Random restart                9.816   0.000000       True
+Simulated annealing           9.819   0.002490      False
+
+==================================================
+Scenario: no_solar_battery
+==================================================
+Supply limit: 12.0 kW
+Flexible appliances: 4
+Maximum solar generation: 0 kW
+
+Appliance domain sizes:
+washing_machine - 24 possible start times
+dishwasher - 19 possible start times
+immersion_heater - 13 possible start times
+ev_charger - 20 possible start times
+
+CSP Performance Comparison
+---------------------------------------------------------------------------
+Algorithm                     Solutions      Nodes    Time (ms)    Valid
+Backtracking                        100        108        0.865     True
+Backtracking + MRV                  100        108        0.729     True
+Backtracking + FC                   100        108        1.544     True
+Backtracking + MRV + FC             100        108        1.583     True
+
+Local Search Performance Comparison
+-------------------------------------------------------------------------------------
+Algorithm                  Avg Cost  Best Cost    Time (ms)    Valid %
+Earliest start               15.544     15.544        0.000     100.0%
+Random schedule              61.139     41.327        0.000       0.0%
+Hill climbing                11.806     11.806        3.005     100.0%
+Random restart               11.806     11.806       63.250     100.0%
+Simulated annealing          11.810     11.806        5.968     100.0%
+
+Energy Performance Comparison
+-------------------------------------------------------------------------------------
+Algorithm                  Cost (EUR)     CO2 (kg)   Grid (kWh)    Valid
+Earliest start                 14.470       12.936       43.900     True
+Random restart                 10.950       10.319       43.900     True
+Simulated annealing            10.950       10.349       43.900     True
+
+Optimal Solution Comparison
+---------------------------------------------------------------------------
+Total valid schedules: 6240
+Search nodes visited: 6580
+Exhaustive search time: 130.547 ms
+Optimal objective score: 11.806
+
+Algorithm                     Score        Gap    Optimal
+Hill climbing                11.806   0.000000       True
+Random restart               11.806   0.000000       True
+Simulated annealing          11.809   0.002490      False
+
+==================================================
+Scenario: high_solar
+==================================================
+Supply limit: 12.0 kW
+Flexible appliances: 4
+Maximum solar generation: 7.0 kW
+
+Appliance domain sizes:
+washing_machine - 28 possible start times
+dishwasher - 27 possible start times
+immersion_heater - 45 possible start times
+ev_charger - 42 possible start times
+
+CSP Performance Comparison
+---------------------------------------------------------------------------
+Algorithm                     Solutions      Nodes    Time (ms)    Valid
+Backtracking                        100        106        1.167     True
+Backtracking + MRV                  100        106        1.190     True
+Backtracking + FC                   100        106        2.825     True
+Backtracking + MRV + FC             100        106        2.793     True
+
+Local Search Performance Comparison
+-------------------------------------------------------------------------------------
+Algorithm                  Avg Cost  Best Cost    Time (ms)    Valid %
+Earliest start                9.764      9.764        0.000     100.0%
+Random schedule               7.712      5.096        0.000     100.0%
+Hill climbing                 3.482      3.296        5.068     100.0%
+Random restart                3.296      3.296      110.496     100.0%
+Simulated annealing           3.584      3.296        6.531     100.0%
+
+Energy Performance Comparison
+-------------------------------------------------------------------------------------
+Algorithm                  Cost (EUR)     CO2 (kg)   Grid (kWh)    Valid
+Earliest start                  9.090        8.119       28.500     True
+Random restart                  3.076        2.645        9.400     True
+Simulated annealing             3.994        3.381       12.100     True
+
+Optimal Solution Comparison
+---------------------------------------------------------------------------
+Total valid schedules: 1400320
+Search nodes visited: 1432742
+Exhaustive search time: 29755.413 ms
+Optimal objective score: 3.296
+
+Algorithm                     Score        Gap    Optimal
+Hill climbing                 3.368   0.072150      False
+Random restart                3.296   0.000000       True
+Simulated annealing           4.275   0.979088      False
+
+==================================================
+Scenario: restricted_supply
+==================================================
+Supply limit: 8.0 kW
+Flexible appliances: 4
+Maximum solar generation: 3.5 kW
+
+Appliance domain sizes:
+washing_machine - 24 possible start times
+dishwasher - 19 possible start times
+immersion_heater - 13 possible start times
+ev_charger - 20 possible start times
+
+CSP Performance Comparison
+---------------------------------------------------------------------------
+Algorithm                     Solutions      Nodes    Time (ms)    Valid
+Backtracking                        100        116        1.334     True
+Backtracking + MRV                  100        116        1.369     True
+Backtracking + FC                   100        116        1.835     True
+Backtracking + MRV + FC             100        116        2.290     True
+
+Local Search Performance Comparison
+-------------------------------------------------------------------------------------
+Algorithm                  Avg Cost  Best Cost    Time (ms)    Valid %
+Earliest start               84.553     84.553        0.000       0.0%
+Random schedule              77.349     49.258        0.000       0.0%
+Hill climbing                 9.824      9.817        3.427     100.0%
+Random restart                9.817      9.817       71.488     100.0%
+Simulated annealing           9.822      9.819        5.903     100.0%
+
+Energy Performance Comparison
+-------------------------------------------------------------------------------------
+Algorithm                  Cost (EUR)     CO2 (kg)   Grid (kWh)    Valid
+Earliest start                 12.608       11.389       38.400    False
+Random restart                  9.088        8.787       38.400     True
+Simulated annealing             9.088        8.847       38.400     True
+
+Optimal Solution Comparison
+---------------------------------------------------------------------------
+Total valid schedules: 2150
+Search nodes visited: 2480
+Exhaustive search time: 54.257 ms
+Optimal objective score: 9.817
+
+Algorithm                     Score        Gap    Optimal
+Hill climbing                 9.817   0.000000       True
+Random restart                9.817   0.000000       True
+Simulated annealing           9.822   0.004980      False
