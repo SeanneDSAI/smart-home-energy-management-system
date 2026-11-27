@@ -12,7 +12,8 @@ sys.path.insert(0, ROOT)
 
 from src.rules import RULES, forward_chain                 # noqa: E402
 from src.knowledge_base import load_knowledge_base          # noqa: E402
-from src.controller import run_day                          # noqa: E402
+from src.controller import run_day, household_demand_kw                          
+# noqa: E402
 
 KB = load_knowledge_base(os.path.join(ROOT, "data", "scenarios", "example"))
 
@@ -83,6 +84,102 @@ def test_state_of_charge_stays_within_limits():
     battery = KB["graph"]["battery"]
     for row in run_day(KB):
         assert battery["min_charge_kwh"] - 1e-6 <= row["soc_kwh"] <= battery["capacity_kwh"] + 1e-6
+
+# Test household demand when no fixed appliances are running
+def test_background_demand():
+    demand = household_demand_kw(KB, 0)
+
+    assert abs(demand - 0.3) < 1e-9
+
+
+# Test household demand when the oven is running
+def test_fixed_appliance_demand():
+    assert abs(household_demand_kw(KB, 36) - 3.3) < 1e-9
+    assert abs(household_demand_kw(KB, 37) - 3.3) < 1e-9
+
+
+# Test that oven demand is removed after it finishes
+def test_fixed_appliance_finished():
+    demand = household_demand_kw(KB, 38)
+
+    assert abs(demand - 0.7) < 1e-9
+
+
+# Test that the controller produces results for all 48 slots
+def test_controller_full_day():
+    results = run_day(KB)
+
+    assert len(results) == 48
+
+    for i in range(len(results)):
+        assert results[i]["slot"] == i
+
+# Test that the battery charges from the grid at night
+def test_night_grid_charging():
+    results = run_day(KB)
+
+    assert results[0]["battery_action"] == "charge_grid"
+    assert results[0]["soc_kwh"] == 6.25
+
+
+# Test that overnight charging stops at the target
+def test_night_charge_target():
+    results = run_day(KB)
+
+    assert results[1]["soc_kwh"] == 7.0
+    assert results[2]["battery_action"] is None
+    assert results[2]["soc_kwh"] == 7.0
+
+
+# Test that the battery discharges during peak hours
+def test_peak_battery_discharge():
+    results = run_day(KB)
+
+    for row in results:
+        if row["battery_action"] == "discharge":
+            assert KB["tariff"][row["slot"]] == "peak"
+
+    assert any(row["battery_action"] == "discharge"
+               for row in results)
+
+
+# Test that battery actions correctly change the stored energy
+def test_battery_charge_changes():
+    results = run_day(KB)
+
+    previous = KB["graph"]["battery"]["initial_charge_kwh"]
+
+    for row in results:
+        current = row["soc_kwh"]
+        action = row["battery_action"]
+
+        if action == "charge_grid" or action == "charge_solar":
+            assert current >= previous
+
+        elif action == "discharge":
+            assert current <= previous
+
+        else:
+            assert current == previous
+
+        previous = current
+
+
+# Test that the controller works without a battery
+def test_controller_without_battery():
+    kb = load_knowledge_base(
+        os.path.join(ROOT, "data", "scenarios", "example")
+    )
+
+    del kb["graph"]["battery"]
+
+    results = run_day(kb)
+
+    assert len(results) == 48
+
+    for row in results:
+        assert row["battery_action"] is None
+        assert row["soc_kwh"] == 0
 
 
 if __name__ == "__main__":
