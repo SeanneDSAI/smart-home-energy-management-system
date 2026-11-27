@@ -5,12 +5,18 @@ Compares CSP and local search algorithms across different
 household scenarios.
 
 Run from the repository root:
-    python evaluation.py
+    python -m src.evaluation
 """
 
 import os
+import sys
 import time
 import random
+
+# The repository root (one level up from src/), put on the path so
+# "from src.x import ..." also works when this file is run directly
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
 
 from src.knowledge_base import load_knowledge_base
 
@@ -28,8 +34,6 @@ from src.localsearch import (
     random_restarting_hillclimbing,
     simulated_annealing
 )
-
-ROOT = os.path.dirname(os.path.abspath(__file__))
 
 SCENARIO_FOLDER = os.path.join(ROOT, "data", "scenarios")
 
