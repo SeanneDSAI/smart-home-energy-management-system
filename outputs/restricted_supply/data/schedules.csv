@@ -1,0 +1,4 @@
+schedule,cost,valid,washing_machine,dishwasher,immersion_heater,ev_charger
+Run as early as possible,84.553,False,18:00-19:30,20:00-22:00,00:00-01:00,19:00-22:00
+Hill climbing,9.817,True,21:30-23:00,21:00-23:00,05:00-06:00,02:00-05:00
+Simulated annealing,9.823,True,21:00-22:30,21:00-23:00,04:30-05:30,01:30-04:30

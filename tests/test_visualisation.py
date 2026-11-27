@@ -6,6 +6,7 @@ Run from the repository root:
     pytest tests/test_visualisation.py
 """
 
+import csv
 import os
 import sys
 
@@ -54,4 +55,18 @@ def test_make_all_writes_charts(tmp_path):
     make_all(KB, str(tmp_path), schedules={"baseline": BASELINE, "hill": BASELINE})
     for name in ("energy_use.png", "electricity_price.png", "carbon_intensity.png",
                  "battery.png", "schedule_cost.png", "dashboard.png"):
-        assert (tmp_path / name).exists()
+        assert (tmp_path / "images" / name).exists()
+
+
+def test_make_all_writes_data(tmp_path):
+    make_all(KB, str(tmp_path), schedules={"baseline": BASELINE, "hill": BASELINE})
+    with open(tmp_path / "data" / "day.csv") as f:
+        day = list(csv.DictReader(f))
+    assert len(day) == 48
+    assert day[0]["time"] == "00:00" and day[47]["time"] == "23:30"
+    assert "EV charger" in day[0]                       # one column per appliance
+
+    with open(tmp_path / "data" / "schedules.csv") as f:
+        schedules = list(csv.DictReader(f))
+    assert [row["schedule"] for row in schedules] == ["baseline", "hill"]
+    assert "ev_charger" in schedules[0]                 # its run time, e.g. "19:00-22:00"
