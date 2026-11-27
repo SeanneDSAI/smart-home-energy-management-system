@@ -15,7 +15,8 @@ from src.knowledge_base import load_knowledge_base
 from src.csp import make_problem
 from src.localsearch import (
     random_state,
-    cost
+    cost,
+    generate_neighbours
 )
 
 # Load the example household scenario
@@ -98,7 +99,7 @@ def test_solar_reduces_cost():
 
     assert with_solar < without_solar
     assert abs(with_solar - 2.4) < 1e-9
-    
+
 
 # Test that running a noisy appliance during quiet hours adds a penalty
 def test_quiet_hours_penalty():
@@ -130,6 +131,70 @@ def test_supply_limit_penalty():
     result = cost(problem, [])
 
     assert abs(result - 480.0) < 1e-9
+
+
+# Test that alternative schedules are generated
+def test_generate_neighbours():
+    state = [36, 40, 0, 4]
+
+    neighbours = generate_neighbours(PROBLEM, state)
+
+    assert len(neighbours) > 0
+    assert state not in neighbours
+
+
+# Test that only one appliance changes in each neighbour
+def test_one_appliance_changes():
+    state = [36, 40, 0, 4]
+
+    neighbours = generate_neighbours(PROBLEM, state)
+
+    for neighbour in neighbours:
+        changes = 0
+
+        for i in range(len(state)):
+            if state[i] != neighbour[i]:
+                changes += 1
+
+        assert changes == 1
+
+
+# Test that neighbouring schedules stay within appliance time windows
+def test_neighbour_domains():
+    state = [36, 40, 0, 4]
+
+    neighbours = generate_neighbours(PROBLEM, state)
+
+    for neighbour in neighbours:
+        assert len(neighbour) == len(state)
+
+        for i in range(len(neighbour)):
+            assert neighbour[i] in PROBLEM["domains"][i]
+
+
+# Test that generating neighbours does not change the original schedule
+def test_original_state_unchanged():
+    state = [36, 40, 0, 4]
+    original = list(state)
+
+    generate_neighbours(PROBLEM, state)
+
+    assert state == original
+
+
+# Test that the correct number of neighbours is generated
+def test_neighbour_count():
+    state = [36, 40, 0, 4]
+
+    neighbours = generate_neighbours(PROBLEM, state)
+
+    expected = 0
+
+    for domain in PROBLEM["domains"]:
+        expected += len(domain) - 1
+
+    assert len(neighbours) == expected
+
 
 
 if __name__ == "__main__":
