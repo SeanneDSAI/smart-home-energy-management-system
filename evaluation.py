@@ -249,6 +249,74 @@ def evaluate_energy(problem):
         print(f"{name:<24} {money:>12.3f} {carbon:>12.3f} {energy:>12.3f} {str(valid):>8}")
 
 
+# Compare local search results against the optimal feasible schedule
+def evaluate_optimal_solution(problem):
+
+    print("\nOptimal Solution Comparison")
+    print("-" * 75)
+
+    start = time.perf_counter()
+
+    schedules, nodes = backtracking_search(
+        problem,
+        limit=None,
+        use_mrv=True,
+        use_forward_checking=True
+    )
+
+    if not schedules:
+        print("No feasible schedules found.")
+        return
+
+    # Find the valid schedule with the lowest objective score
+    optimal = min(schedules, key=lambda s: cost(problem, s))
+    optimal_cost = cost(problem, optimal)
+
+    elapsed = (time.perf_counter() - start) * 1000
+
+    print("Total valid schedules:", len(schedules))
+    print("Search nodes visited:", nodes)
+    print("Exhaustive search time:", round(elapsed, 3), "ms")
+    print("Optimal objective score:", round(optimal_cost, 3))
+
+    random.seed(SEED)
+    initial = random_state(problem)
+
+    hill = hill_climbing(problem, initial)
+
+    random.seed(SEED)
+    restart = random_restarting_hillclimbing(
+        problem, restarts=20
+    )
+
+    random.seed(SEED)
+    annealing = simulated_annealing(
+        problem, random_state(problem)
+    )
+
+    results = [
+        ("Hill climbing", hill),
+        ("Random restart", restart),
+        ("Simulated annealing", annealing)
+    ]
+
+    print(f"\n{'Algorithm':<24} {'Score':>10} {'Gap':>10} {'Optimal':>10}")
+
+    for name, schedule in results:
+
+        score = cost(problem, schedule)
+
+        if not check_schedule(problem, schedule):
+            print(f"{name:<24} {score:>10.3f} {'N/A':>10} {'Invalid':>10}")
+            continue
+
+        gap = max(0.0, score - optimal_cost)
+
+        reached_optimal = abs(score - optimal_cost) < 1e-9
+
+        print(f"{name:<24} {score:>10.3f} {gap:>10.6f} {str(reached_optimal):>10}")
+
+
 
 def main():
     for name in SCENARIOS:
@@ -261,6 +329,8 @@ def main():
         evaluate_local_search(problem)
 
         evaluate_energy(problem)
+
+        evaluate_optimal_solution(problem)
 
 
 if __name__ == "__main__":
