@@ -189,6 +189,67 @@ def evaluate_local_search(problem, runs=10):
 
 
 
+# Calculate electricity costs, carbon emissions and grid energy usage
+def energy_metrics(problem, schedule):
+
+    assignment = dict(enumerate(schedule))
+    demand = load_per_slot(problem, assignment)
+
+    electricity_cost = 0.0
+    carbon_emissions = 0.0
+    grid_energy = 0.0
+
+    for s in range(48):
+
+        grid = max(0.0, demand[s] - problem["solar"][s])
+
+        kwh = grid * 0.5
+
+        grid_energy += kwh
+        electricity_cost += kwh * problem["price"][s]
+        carbon_emissions += kwh * problem["carbon"][s]
+
+    return electricity_cost, carbon_emissions / 1000, grid_energy
+
+
+# Compare electricity costs and carbon emissions before and after optimisation
+def evaluate_energy(problem):
+
+    print("\nEnergy Performance Comparison")
+    print("-" * 85)
+
+    random.seed(SEED)
+
+    baseline = [domain[0] for domain in problem["domains"]]
+
+    hill = random_restarting_hillclimbing(
+        problem, restarts=20
+    )
+
+    random.seed(SEED)
+
+    annealing = simulated_annealing(
+        problem, random_state(problem)
+    )
+
+    schedules = [
+        ("Earliest start", baseline),
+        ("Random restart", hill),
+        ("Simulated annealing", annealing)
+    ]
+
+    print(f"{'Algorithm':<24} {'Cost (EUR)':>12} {'CO2 (kg)':>12} {'Grid (kWh)':>12} {'Valid':>8}")
+
+    for name, schedule in schedules:
+
+        money, carbon, energy = energy_metrics(problem, schedule)
+
+        valid = check_schedule(problem, schedule)
+
+        print(f"{name:<24} {money:>12.3f} {carbon:>12.3f} {energy:>12.3f} {str(valid):>8}")
+
+
+
 def main():
     for name in SCENARIOS:
         problem = load_scenario(name)
@@ -198,6 +259,8 @@ def main():
         evaluate_csp(problem)
 
         evaluate_local_search(problem)
+
+        evaluate_energy(problem)
 
 
 if __name__ == "__main__":
