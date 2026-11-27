@@ -1,6 +1,8 @@
 # Smart Home Energy Management System (SHEMS)
 
-Knowledge-driven AI system that schedules home appliances and battery use to cut electricity cost and carbon under time-of-use tariffs.
+[![Tests](https://github.com/SeanneDSAI/smart-home-energy-management-system/actions/workflows/tests.yml/badge.svg)](https://github.com/SeanneDSAI/smart-home-energy-management-system/actions/workflows/tests.yml)
+
+A knowledge-driven AI system that schedules home appliances and battery use to cut electricity cost and carbon under time-of-use tariffs.
 
 **Module:** AINL3001 Knowledge-Driven AI · **Group:** Dream Team Wallahi
 
@@ -14,6 +16,8 @@ SHEMS decides **when to run flexible appliances** (dishwasher, washing machine, 
 
 See [proposal.md](proposal.md) for the full problem description and design.
 
+![SHEMS dashboard for the example scenario](images/dashboard.png)
+
 ## AI techniques
 
 | Technique | File | Status |
@@ -21,14 +25,33 @@ See [proposal.md](proposal.md) for the full problem description and design.
 | Knowledge representation (knowledge graph of devices, tariff, occupancy) | [src/knowledge_base.py](src/knowledge_base.py) | Done |
 | Rule-based expert system (forward chaining with explanations) | [src/rules.py](src/rules.py) | Done |
 | Slot-by-slot battery controller driven by the rules | [src/controller.py](src/controller.py) | Done |
-| Constraint satisfaction: backtracking with MRV and forward checking | [src/csp.py](src/csp.py) | In progress |
-| Local search: hill climbing / simulated annealing over cost + carbon | [src/localsearch.py](src/localsearch.py) | In progress |
+| Constraint satisfaction: node consistency, then backtracking with MRV and forward checking | [src/csp.py](src/csp.py) | Done |
+| Local search: random-restart hill climbing and simulated annealing over cost + carbon | [src/localsearch.py](src/localsearch.py) | Done |
+| Charts and a one-page dashboard of the simulated day | [src/visualisation.py](src/visualisation.py) | Done |
+| Interactive menu that ties everything together | [main_cli.py](main_cli.py) | Done |
+
+### How the pieces fit
+
+1. **Knowledge base.** A scenario's four JSON files are loaded into a knowledge graph. Every other module asks it questions, such as an appliance's power, the price in a slot, or whether a slot is in quiet hours.
+2. **CSP model.** `make_problem` turns the knowledge base into a CSP. The variables are the flexible appliances, each domain is the set of start slots that fit the appliance's time window, and the constraints are quiet hours and the supply limit. `is_valid` checks a full schedule, and `backtracking_search` finds valid schedules.
+3. **Local search.** Hill climbing (with 20 random restarts) and simulated annealing look for the cheapest schedule. The cost function is:
+
+   ```text
+   cost = money (EUR) + 0.000083 × carbon (g CO2) + 10 × constraint violations
+   ```
+
+   The carbon weight is roughly the EU carbon market price per gram. A violation is each kW over the supply limit, and each slot in which a noisy appliance runs during quiet hours.
+4. **Rule-based controller.** For each half hour, forward chaining over the rules decides whether the battery charges from the grid, charges from solar, discharges or does nothing. It also gives advice, such as not running noisy appliances in quiet hours. Every decision comes with a written reason.
+5. **Visualisation.** The schedule and the controller's battery log are drawn as charts and combined into a dashboard.
 
 ## Requirements
 
 - Python 3.10 or newer
-- No third-party packages are needed to run the code. Everything uses the standard library.
-- [pytest](https://pytest.org) is optional, for running the tests.
+- The AI code (knowledge base, rules, controller, CSP and local search) uses only the standard library.
+- [matplotlib](https://matplotlib.org) is needed for the charts and the dashboard.
+- [pytest](https://pytest.org) is needed to run the tests.
+
+Both are listed in [requirements.txt](requirements.txt).
 
 ## Setup
 
@@ -49,40 +72,128 @@ pip install -r requirements.txt
 
 Run every command from the repository root.
 
-**Summarise a scenario** (house, appliances, tariff, occupancy, solar and battery):
+### Interactive menu (recommended)
 
 ```bash
-python -m src.knowledge_base                         # uses data/scenarios/example
-python -m src.knowledge_base data/scenarios/<name>   # any other scenario
+python main_cli.py                           # uses data/scenarios/example
+python main_cli.py data/scenarios/<name>     # any other scenario
 ```
-
-**Run the rule-based controller for a day.** This prints each slot where the battery acts or advice is given, with the reason:
-
-```bash
-python -m src.controller
-```
-
-Example output:
 
 ```text
-00:00  soc= 6.25 kWh  demand= 0.3 kW  charge_grid  cheap night rate and the battery is below its overnight target ...
-01:00  soc=  7.0 kWh  demand= 0.3 kW  -            quiet hours, so do not run noisy appliances
+=======================================
+ Scenario: data/scenarios/example
+---------------------------------------
+ 1  Show the scenario
+ 2  Find the best schedule
+ 3  Run the battery controller
+ 4  Make charts (saved to images/)
+ q  Quit
+=======================================
 ```
+
+| Option | What it does |
+|---|---|
+| 1 | Summarises the house, appliances, tariff, occupancy, solar and battery. |
+| 2 | Runs hill climbing and simulated annealing, compares them with a "run as early as possible" baseline, and prints the best schedule. |
+| 3 | Runs the rule-based battery controller for the day and prints each slot where it acts or gives advice, with the reason. |
+| 4 | Saves the charts and the dashboard to `images/`, then offers to open them in a window. |
+
+The searches are random, so the menu uses a fixed seed (`SEED = 1` in [main_cli.py](main_cli.py)). Each run gives the same results, so the numbers in the report and the demo always match.
+
+Example output of option 2 on the example scenario:
+
+```text
+  Schedule                       Cost  Valid
+  Run as early as possible     13.553  yes
+  Hill climbing                 9.816  yes
+  Simulated annealing           9.818  yes
+
+Best schedule (Hill climbing):
+
+  Appliance              kW  Runs
+  washing_machine       2.0  21:30-23:00  (noisy)
+  dishwasher            1.8  21:00-23:00  (noisy)
+  immersion_heater      3.0  03:00-04:00
+  ev_charger            7.0  02:00-05:00
+```
+
+The optimised schedule scores about 28% lower than the baseline. It moves the EV charger and immersion heater onto the cheap night rate and finishes the noisy appliances before quiet hours start at 23:00.
+
+Example output of option 3:
+
+```text
+00:00  soc= 6.25 kWh  demand= 0.3 kW  charge_grid  cheap night rate and the battery is below its overnight target (room kept for tomorrow's solar); ...
+01:00  soc=  7.0 kWh  demand= 0.3 kW  -            quiet hours, so do not run noisy appliances
+08:00  soc= 7.18 kWh  demand= 0.6 kW  charge_solar spare solar beyond the home's demand, with room in the battery
+17:00  soc= 9.56 kWh  demand= 0.8 kW  discharge    peak tariff, so importing now is costly; costly period and the battery has usable charge; ...
+```
+
+**Note:** the battery controller does not yet take the scheduled flexible appliances into account. It works from the base load and fixed appliances only.
+
+### Running modules on their own
+
+```bash
+python -m src.knowledge_base [scenario]           # summarise a scenario
+python -m src.controller                          # battery controller for the example day
+python -m src.localsearch                         # random start, hill climbing, then random-restart hill climbing
+python -m src.visualisation [scenario] [out_dir]  # write charts (default out_dir: images/)
+```
+
+### Using the CSP solver from Python
+
+```python
+from src.knowledge_base import load_knowledge_base
+from src.csp import make_problem, backtracking_search, is_valid
+
+kb = load_knowledge_base("data/scenarios/example")
+problem = make_problem(kb)
+
+schedules, nodes = backtracking_search(problem)              # first valid schedule
+every, nodes = backtracking_search(problem, limit=None)      # every valid schedule
+plain, nodes = backtracking_search(problem, use_mrv=False,
+                                   use_forward_checking=False)  # compare the heuristics
+```
+
+A schedule is a list of start slots, one per flexible appliance, in the order of `problem["names"]`. The CSP and the local search share this format, so `is_valid(problem, schedule)` can check a result from either. `nodes` counts the search nodes visited, which shows how much MRV and forward checking prune.
+
+## Charts and dashboard
+
+Option 4 in the menu, or `python -m src.visualisation`, writes these to `images/`:
+
+| File | Shows |
+|---|---|
+| `energy_use.png` | Demand by source (stacked) using the optimised schedule, with solar generation and the supply limit |
+| `electricity_price.png` | Tariff price over the day |
+| `carbon_intensity.png` | Grid carbon intensity over the day |
+| `battery.png` | Battery state of charge, with a marker for each controller action (only if the scenario has a battery) |
+| `schedule_cost.png` | Cost of the baseline against hill climbing and simulated annealing |
+| `dashboard.png` | All of the above on one page, with a headline of energy used, grid import and savings |
 
 ## Tests
 
 ```bash
-python tests/test_knowledge_base.py
-python tests/test_rules.py
-
-# or, with pytest installed
-pytest
+pytest -v
 ```
+
+There are 34 tests:
+
+| File | Covers |
+|---|---|
+| [tests/test_knowledge_base.py](tests/test_knowledge_base.py) | Time and slot conversion, wrapping past midnight, graph queries, tariff boundaries, solar and battery, bad input |
+| [tests/test_rules.py](tests/test_rules.py) | Each rule fires when it should and not otherwise, chaining, explanations, and the battery staying within limits over a full day |
+| [tests/test_visualisation.py](tests/test_visualisation.py) | Day data has 48 slots, demand adds up and wraps past midnight, and every chart is written |
+| [tests/test_cli.py](tests/test_cli.py) | The menu quits, and options 1–3 run without errors |
+
+`test_knowledge_base.py` and `test_rules.py` also run without pytest, e.g. `python tests/test_rules.py`.
+
+GitHub Actions ([.github/workflows/tests.yml](.github/workflows/tests.yml)) runs the full suite on Python 3.10 and 3.12 for every push and pull request to `main`.
 
 ## Project structure
 
 ```text
 smart-home-energy-management-system/
+├── .github/workflows/
+│   └── tests.yml             # CI: runs pytest on Python 3.10 and 3.12
 ├── data/
 │   └── scenarios/
 │       └── example/          # one scenario = four JSON files
@@ -90,13 +201,16 @@ smart-home-energy-management-system/
 │           ├── home.json
 │           ├── occupancy.json
 │           └── tariff.json
+├── images/                   # generated charts and dashboard
 ├── src/
 │   ├── knowledge_base.py     # loads scenarios, knowledge graph, queries, facts per slot
 │   ├── rules.py              # rule set and forward chaining
 │   ├── controller.py         # runs the rules across the day, manages the battery
-│   ├── csp.py                # CSP scheduler for flexible appliances
-│   └── localsearch.py        # cost + carbon optimisation
+│   ├── csp.py                # CSP model, constraints, backtracking with MRV + forward checking
+│   ├── localsearch.py        # cost function, hill climbing, simulated annealing
+│   └── visualisation.py      # charts and dashboard
 ├── tests/
+├── main_cli.py               # interactive menu
 ├── proposal.md
 ├── requirements.txt
 └── README.md
@@ -143,9 +257,9 @@ A scenario is a folder holding four JSON files. Times are `"HH:MM"` strings on t
   "carbon_g_per_kwh_hourly": [220, 210, "... 24 values"] }
 ```
 
-The example prices are illustrative and use the Irish smart time-of-use structure.
+The example prices are illustrative and follow the structure of Irish smart time-of-use tariffs.
 
-To add a scenario, copy `data/scenarios/example/` to a new folder and edit the files.
+To add a scenario, copy `data/scenarios/example/` to a new folder and edit the files. A flexible appliance whose time window is shorter than its run time is rejected when the problem is built.
 
 ## Team
 
