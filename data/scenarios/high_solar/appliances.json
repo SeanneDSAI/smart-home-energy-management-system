@@ -1,0 +1,45 @@
+[
+  {
+    "name": "washing_machine",
+    "power_kw": 2.0,
+    "duration_minutes": 90,
+    "flexible": true,
+    "noisy": true,
+    "earliest": "08:00",
+    "latest_finish": "23:00"
+  },
+  {
+    "name": "dishwasher",
+    "power_kw": 1.8,
+    "duration_minutes": 120,
+    "flexible": true,
+    "noisy": true,
+    "earliest": "08:00",
+    "latest_finish": "23:00"
+  },
+  {
+    "name": "immersion_heater",
+    "power_kw": 3.0,
+    "duration_minutes": 60,
+    "flexible": true,
+    "noisy": false,
+    "earliest": "00:00",
+    "latest_finish": "23:00"
+  },
+  {
+    "name": "ev_charger",
+    "power_kw": 7.0,
+    "duration_minutes": 180,
+    "flexible": true,
+    "noisy": false,
+    "earliest": "08:00",
+    "latest_finish": "07:30"
+  },
+  {
+    "name": "oven",
+    "power_kw": 2.5,
+    "duration_minutes": 60,
+    "flexible": false,
+    "start": "18:00"
+  }
+]
