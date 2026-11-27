@@ -1,0 +1,65 @@
+{
+  "_note": "Illustrative prices using the Irish smart time-of-use structure (night/day/peak). Replace with real supplier rates and EirGrid carbon data.",
+  "periods": [
+    {
+      "name": "night",
+      "times": [
+        [
+          "23:00",
+          "08:00"
+        ]
+      ],
+      "price_eur_per_kwh": 0.18
+    },
+    {
+      "name": "day",
+      "times": [
+        [
+          "08:00",
+          "17:00"
+        ],
+        [
+          "19:00",
+          "23:00"
+        ]
+      ],
+      "price_eur_per_kwh": 0.34
+    },
+    {
+      "name": "peak",
+      "times": [
+        [
+          "17:00",
+          "19:00"
+        ]
+      ],
+      "price_eur_per_kwh": 0.42
+    }
+  ],
+  "carbon_g_per_kwh_hourly": [
+    220,
+    210,
+    200,
+    195,
+    195,
+    200,
+    230,
+    270,
+    300,
+    290,
+    270,
+    250,
+    240,
+    240,
+    250,
+    270,
+    300,
+    340,
+    350,
+    330,
+    300,
+    280,
+    260,
+    240
+  ]
+}
