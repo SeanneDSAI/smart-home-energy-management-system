@@ -292,6 +292,56 @@ def test_random_restart_cost():
     assert cost(PROBLEM, multiple) <= cost(PROBLEM, single)
 
 
+# Test that simulated annealing returns a complete schedule
+def test_simulated_annealing_schedule():
+    random.seed(42)
+    state = [36, 40, 0, 4]
+
+    result = simulated_annealing(PROBLEM, state)
+
+    assert len(result) == len(PROBLEM["names"])
+
+    for i in range(len(result)):
+        assert result[i] in PROBLEM["domains"][i]
+
+
+# Test that simulated annealing returns an equal or lower cost
+def test_simulated_annealing_cost():
+    random.seed(42)
+    state = [36, 40, 0, 4]
+
+    original_cost = cost(PROBLEM, state)
+
+    result = simulated_annealing(PROBLEM, state)
+    final_cost = cost(PROBLEM, result)
+
+    assert final_cost <= original_cost
+
+
+# Test that simulated annealing does not change the original schedule
+def test_simulated_annealing_original_state():
+    random.seed(42)
+    state = [36, 40, 0, 4]
+    original = list(state)
+
+    simulated_annealing(PROBLEM, state)
+
+    assert state == original
+
+
+# Test that the same random seed produces the same result
+def test_simulated_annealing_reproducibility():
+    state = [36, 40, 0, 4]
+
+    random.seed(42)
+    first = simulated_annealing(PROBLEM, state)
+
+    random.seed(42)
+    second = simulated_annealing(PROBLEM, state)
+
+    assert first == second
+
+
 
 if __name__ == "__main__":
     tests = [test for name, test in sorted (globals().items()) 
