@@ -16,7 +16,9 @@ from src.csp import make_problem
 from src.localsearch import (
     random_state,
     cost,
-    generate_neighbours
+    generate_neighbours,
+    hill_climbing,
+    random_restarting_hillclimbing
 )
 
 # Load the example household scenario
@@ -194,6 +196,65 @@ def test_neighbour_count():
         expected += len(domain) - 1
 
     assert len(neighbours) == expected
+
+
+# Test that hill climbing improves or maintains the original cost
+def test_hill_climbing_cost():
+    state = [36, 40, 0, 4]
+
+    original_cost = cost(PROBLEM, state)
+
+    result = hill_climbing(PROBLEM, state)
+    final_cost = cost(PROBLEM, result)
+
+    assert final_cost <= original_cost
+
+
+# Test that no cheaper neighbouring schedule remains
+def test_hill_climbing_local_minimum():
+    state = [36, 40, 0, 4]
+
+    result = hill_climbing(PROBLEM, state)
+    final_cost = cost(PROBLEM, result)
+
+    neighbours = generate_neighbours(PROBLEM, result)
+
+    for neighbour in neighbours:
+        assert cost(PROBLEM, neighbour) >= final_cost
+
+
+# Test that hill climbing does not change the original schedule
+def test_hill_climbing_original_state():
+    state = [36, 40, 0, 4]
+    original = list(state)
+
+    hill_climbing(PROBLEM, state)
+
+    assert state == original
+
+
+# Test that random-restart hill climbing returns a complete schedule
+def test_random_restart_schedule():
+    random.seed(42)
+
+    result = random_restarting_hillclimbing(PROBLEM, restarts=5)
+
+    assert result is not None
+    assert len(result) == len(PROBLEM["names"])
+
+    for i in range(len(result)):
+        assert result[i] in PROBLEM["domains"][i]
+
+
+# Test that multiple restarts perform at least as well as one restart
+def test_random_restart_cost():
+    random.seed(42)
+    single = random_restarting_hillclimbing(PROBLEM, restarts=1)
+
+    random.seed(42)
+    multiple = random_restarting_hillclimbing(PROBLEM, restarts=5)
+
+    assert cost(PROBLEM, multiple) <= cost(PROBLEM, single)
 
 
 
