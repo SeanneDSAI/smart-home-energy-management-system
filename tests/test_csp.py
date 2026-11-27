@@ -23,7 +23,8 @@ from src.csp import (
     node_consistent_domains,
     select_variable,
     forward_check,
-    backtracking_search
+    backtracking_search,
+    schedule_to_times 
 )
 
 # Load the example household scenario
@@ -311,6 +312,39 @@ def test_empty_domain():
 
     assert schedules == []
     assert nodes == 0
+
+
+# Test that appliance schedules convert to the correct start and finish times
+def test_schedule_to_times():
+    schedule = [36, 40, 0, 4]
+
+    times = schedule_to_times(PROBLEM, schedule)
+
+    assert times["washing_machine"] == ("18:00", "19:30")
+    assert times["dishwasher"] == ("20:00", "22:00")
+    assert times["immersion_heater"] == ("00:00", "01:00")
+    assert times["ev_charger"] == ("02:00", "05:00")
+
+
+# Test that appliance finish times wrap around midnight
+def test_schedule_to_times_midnight():
+    schedule = [36, 40, 0, 46]
+
+    times = schedule_to_times(PROBLEM, schedule)
+
+    assert times["ev_charger"] == ("23:00", "02:00")
+
+
+# Test that every flexible appliance is included in the converted schedule
+def test_schedule_to_times_all_appliances():
+    schedule = [36, 40, 0, 4]
+
+    times = schedule_to_times(PROBLEM, schedule)
+
+    assert len(times) == len(PROBLEM["names"])
+
+    for name in PROBLEM["names"]:
+        assert name in times
 
 
 if __name__ == "__main__":
