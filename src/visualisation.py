@@ -1,5 +1,5 @@
 """
-Visualisation: charts of one simulated day, plus the numbers behind them.
+Visualisation: charts of one simulated day.
 For a scenario they are saved in outputs/<scenario>/:
 
   images/energy_use.png         household demand by source (stacked) against solar
@@ -10,17 +10,12 @@ For a scenario they are saved in outputs/<scenario>/:
                                 (only when the scenario has a battery)
   images/schedule_cost.png      daily cost of the baseline vs the optimised schedules
   images/dashboard.png          all of the above on one page
-  data/day.csv                  slot by slot: demand by source, solar, grid import,
-                                price, carbon and the battery
-  data/schedules.csv            each schedule's cost, validity and run times
-                                (only when there are flexible appliances)
 
 Each chart is drawn by one draw_* function that paints onto an axis, so the same
 code makes both the single-chart PNG and its panel in the dashboard.
 
 """
 
-import csv
 import os
 import sys
 
@@ -30,9 +25,9 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 OUTPUTS = os.path.join(ROOT, "outputs")
 
-from src.knowledge_base import load_knowledge_base, slot_to_time, SLOTS_PER_DAY
+from src.knowledge_base import load_knowledge_base, SLOTS_PER_DAY
 from src.controller import run_day
-from src.csp import make_problem, is_valid
+from src.csp import make_problem
 from src.scheduler import solve_all, schedule_costs, best_schedule
 
 SLOT_HOURS = 0.5
@@ -213,48 +208,15 @@ def plot_dashboard(kb, problem, sources, rows, costs, path):
 
 
 # ---------------------------------------------------------------------------
-# Data files: the numbers behind the charts, as CSV
-# ---------------------------------------------------------------------------
-
-def write_csv(path, rows):
-    """rows: a list of dicts that all have the same keys (the header)."""
-    with open(path, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=list(rows[0]))
-        writer.writeheader()
-        writer.writerows(rows)
-
-
-def day_table(sources, rows):
-    """One row per slot: the time, each source's demand, then the day_data columns."""
-    return [{"time": slot_to_time(s),
-             **{name: round(load[s], 3) for name, load in sources.items()},
-             **rows[s]}
-            for s in range(SLOTS_PER_DAY)]
-
-
-def schedule_table(problem, schedules, costs):
-    """One row per schedule: its cost, whether it is valid, and when each appliance runs."""
-    return [{"schedule": name,
-             "cost": round(costs[name], 3),
-             "valid": is_valid(problem, schedule),
-             **{appliance: "%s-%s" % (slot_to_time(start),
-                                      slot_to_time(start + problem["duration"][i]))
-                for i, (appliance, start) in enumerate(zip(problem["names"], schedule))}}
-            for name, schedule in schedules.items()]
-
-
-# ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
 
 def make_all(kb, out_dir, schedules=None):
-    """Write every chart and the dashboard to out_dir/images and the numbers
-    behind them to out_dir/data; return the paths written.
+    """Write every chart and the dashboard to out_dir/images; return the paths written.
     schedules: {name: schedule} as from solve_all, to chart results already found
     (the first entry is the baseline). Left out, the searches are run here."""
-    images, data = os.path.join(out_dir, "images"), os.path.join(out_dir, "data")
+    images = os.path.join(out_dir, "images")
     os.makedirs(images, exist_ok=True)
-    os.makedirs(data, exist_ok=True)
     problem = make_problem(kb)
     costs, best = {}, []
     if problem["names"]:
@@ -265,22 +227,18 @@ def make_all(kb, out_dir, schedules=None):
 
     paths = []
 
-    def out(folder, name):
-        paths.append(os.path.join(folder, name))
+    def out(name):
+        paths.append(os.path.join(images, name))
         return paths[-1]
 
-    save_single(out(images, "energy_use.png"), (11, 5), draw_energy, problem, sources, rows)
-    save_single(out(images, "electricity_price.png"), (11, 3), draw_price, rows)
-    save_single(out(images, "carbon_intensity.png"), (11, 3), draw_carbon, rows)
+    save_single(out("energy_use.png"), (11, 5), draw_energy, problem, sources, rows)
+    save_single(out("electricity_price.png"), (11, 3), draw_price, rows)
+    save_single(out("carbon_intensity.png"), (11, 3), draw_carbon, rows)
     if "battery" in kb["graph"]:
-        save_single(out(images, "battery.png"), (11, 4), draw_battery, kb, rows)
+        save_single(out("battery.png"), (11, 4), draw_battery, kb, rows)
     if costs:
-        save_single(out(images, "schedule_cost.png"), (8, 3), draw_cost, costs)
-    plot_dashboard(kb, problem, sources, rows, costs, out(images, "dashboard.png"))
-
-    write_csv(out(data, "day.csv"), day_table(sources, rows))
-    if costs:
-        write_csv(out(data, "schedules.csv"), schedule_table(problem, schedules, costs))
+        save_single(out("schedule_cost.png"), (8, 3), draw_cost, costs)
+    plot_dashboard(kb, problem, sources, rows, costs, out("dashboard.png"))
     return paths
 
 

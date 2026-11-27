@@ -52,7 +52,7 @@ def list_scenarios():
 def load_session(folder):
     """A fresh session for the scenario in folder. Raises OSError, ValueError
     or KeyError if the scenario cannot be loaded.
-    Its charts and data files go in outputs/<scenario name>/."""
+    Its charts go in outputs/<scenario name>/images/."""
     kb = load_knowledge_base(folder)
     problem = make_problem(kb)
     folder = os.path.abspath(folder)
@@ -110,14 +110,10 @@ def make_charts(session):
 
     if not session["schedules"]:
         print("\nRunning the searches first...")
-    paths = make_all(session["kb"], session["outputs"], schedules=session["schedules"])
-    images = [p for p in paths if p.endswith(".png")]
+    images = make_all(session["kb"], session["outputs"], schedules=session["schedules"])
     print("\nSaved to %s:" % session["outputs"])
     for number, path in enumerate(images, 1):
         print("  %d  images/%s" % (number, os.path.basename(path)))
-    for path in paths:
-        if path not in images:
-            print("     data/%s" % os.path.basename(path))
 
     while True:
         choice = ask("\nShow a chart? Number, 'a' for all, Enter to skip: ").lower()

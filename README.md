@@ -98,7 +98,7 @@ python main_cli.py data/scenarios/<name>     # any other scenario
 | 1 | Summarises the house, appliances, tariff, occupancy, solar and battery. |
 | 2 | Runs hill climbing and simulated annealing, compares them with a "run as early as possible" baseline, and prints the best schedule. |
 | 3 | Runs the rule-based battery controller for the day and prints each slot where it acts or gives advice, with the reason. |
-| 4 | Saves the charts and dashboard to `outputs/<scenario>/images/` and the numbers behind them to `outputs/<scenario>/data/`, then offers to open the charts in a window. |
+| 4 | Saves the charts and dashboard to `outputs/<scenario>/images/`, then offers to open them in a window. |
 | 5 | Lists every scenario in `data/scenarios/` and switches to the one you pick, without restarting. |
 
 The searches are random, so the menu uses a fixed seed (`SEED = 1` in [main_cli.py](main_cli.py)). Each run gives the same results, so the numbers in the report and the demo always match.
@@ -176,13 +176,12 @@ A schedule is a list of start slots, one per flexible appliance, in the order of
 
 ## Charts and dashboard
 
-Every output goes in `outputs/`, one folder per scenario plus one for the evaluation, each split into `images/` and `data/`:
+Every output goes in `outputs/`, one folder per scenario plus one for the evaluation:
 
 ```text
 outputs/
 ├── example/
-│   ├── images/        # charts and dashboard
-│   └── data/          # day.csv, schedules.csv
+│   └── images/        # charts and dashboard
 ├── high_solar/
 ├── no_solar_battery/
 ├── restricted_supply/
@@ -201,8 +200,6 @@ Option 4 in the menu, or `python -m src.visualisation`, writes these to `outputs
 | `images/battery.png` | Battery state of charge, with a marker for each controller action (only if the scenario has a battery) |
 | `images/schedule_cost.png` | Cost of the baseline against hill climbing and simulated annealing |
 | `images/dashboard.png` | All of the above on one page, with a headline of energy used, grid import and savings |
-| `data/day.csv` | Slot by slot: demand by source, total demand, solar, grid import, price, carbon, battery charge and action |
-| `data/schedules.csv` | Each schedule's cost, whether it is valid, and when each appliance runs |
 
 `python -m src.evaluation_charts` compares all the scenarios and writes these to `outputs/evaluation/`:
 
@@ -219,7 +216,7 @@ Option 4 in the menu, or `python -m src.visualisation`, writes these to `outputs
 pytest -v
 ```
 
-There are 120 tests:
+There are 113 tests:
 
 | File | Tests | Covers |
 |---|---|---|
@@ -228,10 +225,10 @@ There are 120 tests:
 | [tests/test_csp.py](tests/test_csp.py) | 30 | Start-time domains (including past midnight), quiet hours, the supply limit with solar, node consistency, MRV, forward checking, backtracking with and without heuristics, impossible problems |
 | [tests/test_localsearch.py](tests/test_localsearch.py) | 22 | Random states, the cost function (money, carbon, solar, both penalties), neighbours, hill climbing, random restarts and simulated annealing |
 | [tests/test_integration.py](tests/test_integration.py) | 5 | Every scenario in `data/scenarios/` loads and runs through the CSP, local search, controller and charts |
-| [tests/test_visualisation.py](tests/test_visualisation.py) | 6 | Day data has 48 slots, demand adds up and wraps past midnight, every chart is written to `images/`, and `day.csv` and `schedules.csv` are written to `data/` |
-| [tests/test_scheduler.py](tests/test_scheduler.py) | 5 | The baseline comes first, every schedule is valid, the searches beat the baseline, and the best schedule is never the baseline unless it is the only one |
-| [tests/test_evaluation_charts.py](tests/test_evaluation_charts.py) | 7 | Both evaluation charts are written to `images/`, results are saved under `data/`, saved results are reused (and rerun on `--refresh`), and the example scenario's numbers are sensible |
-| [tests/test_cli.py](tests/test_cli.py) | 9 | The menu quits, options 1–3 run, and option 5 lists and switches scenarios, rejects a bad choice, and sends each scenario's charts to its own folder |
+| [tests/test_visualisation.py](tests/test_visualisation.py) | 3 | Demand adds up and wraps past midnight, and every chart is written to `images/` |
+| [tests/test_scheduler.py](tests/test_scheduler.py) | 4 | The baseline comes first, every schedule is valid, the searches beat the baseline, and the baseline is never picked as the best schedule |
+| [tests/test_evaluation_charts.py](tests/test_evaluation_charts.py) | 6 | Both evaluation charts are written to `images/`, saved results are reused (and rerun on `--refresh`), and the example scenario's numbers are sensible |
+| [tests/test_cli.py](tests/test_cli.py) | 7 | The menu quits, options 1–3 run, and option 5 lists and switches scenarios, rejects a bad choice, and sends each scenario's charts to its own folder |
 
 All of them except `test_visualisation.py`, `test_scheduler.py`, `test_evaluation_charts.py` and `test_cli.py` also run without pytest, e.g. `python tests/test_rules.py`.
 
@@ -253,7 +250,7 @@ smart-home-energy-management-system/
 │       ├── high_solar/
 │       ├── no_solar_battery/
 │       └── restricted_supply/
-├── outputs/                  # charts (images/) and data files (data/), one folder per scenario + evaluation/
+├── outputs/                  # charts, one folder per scenario, plus evaluation/ (charts and saved results)
 ├── src/
 │   ├── knowledge_base.py     # loads scenarios, knowledge graph, queries, facts per slot
 │   ├── rules.py              # rule set and forward chaining

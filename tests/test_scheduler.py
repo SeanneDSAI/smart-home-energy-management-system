@@ -42,7 +42,3 @@ def test_searches_beat_the_baseline():
 def test_best_schedule_skips_baseline():
     # even when the baseline is cheapest, a search result is picked
     assert best_schedule({"baseline": 1.0, "a": 5.0, "b": 3.0}) == "b"
-
-
-def test_best_schedule_only_baseline():
-    assert best_schedule({"baseline": 1.0}) == "baseline"

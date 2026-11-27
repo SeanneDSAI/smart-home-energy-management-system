@@ -1,12 +1,12 @@
 """
-Tests for src/visualisation.py: the per-slot day data, demand split by source
-(including runs that wrap past midnight) and that every chart file is written.
+Tests for src/visualisation.py: demand split by source (including runs that
+wrap past midnight) and that every chart file is written. The 48-slot day data
+is checked for every scenario in tests/test_integration.py.
 Uses matplotlib's non-interactive Agg backend so no windows open.
 Run from the repository root:
     pytest tests/test_visualisation.py
 """
 
-import csv
 import os
 import sys
 
@@ -18,24 +18,16 @@ sys.path.insert(0, ROOT)
 
 from src.knowledge_base import load_knowledge_base                     
 from src.csp import make_problem                                       
-from src.visualisation import pretty_name, day_data, make_all, demand_by_source  
+from src.visualisation import pretty_name, make_all, demand_by_source
 
 KB = load_knowledge_base(os.path.join(ROOT, "data", "scenarios", "example"))
 PROBLEM = make_problem(KB)
 BASELINE = [d[0] for d in PROBLEM["domains"]]
 
 
-def test_pretty_name():
-    assert pretty_name("ev_charger") == "EV charger"
-
-
-def test_day_data_has_48_slots():
-    _, _, rows = day_data(KB, BASELINE)
-    assert len(rows) == 48
-
-
 def test_demand_adds_up():
     # each appliance's series holds exactly its power x its run time
+    # (series are named by pretty_name, so this also checks that naming)
     sources = demand_by_source(PROBLEM, BASELINE)
     for i, name in enumerate(PROBLEM["names"]):
         total = sum(sources[pretty_name(name)])
@@ -56,17 +48,3 @@ def test_make_all_writes_charts(tmp_path):
     for name in ("energy_use.png", "electricity_price.png", "carbon_intensity.png",
                  "battery.png", "schedule_cost.png", "dashboard.png"):
         assert (tmp_path / "images" / name).exists()
-
-
-def test_make_all_writes_data(tmp_path):
-    make_all(KB, str(tmp_path), schedules={"baseline": BASELINE, "hill": BASELINE})
-    with open(tmp_path / "data" / "day.csv") as f:
-        day = list(csv.DictReader(f))
-    assert len(day) == 48
-    assert day[0]["time"] == "00:00" and day[47]["time"] == "23:30"
-    assert "EV charger" in day[0]                       # one column per appliance
-
-    with open(tmp_path / "data" / "schedules.csv") as f:
-        schedules = list(csv.DictReader(f))
-    assert [row["schedule"] for row in schedules] == ["baseline", "hill"]
-    assert "ev_charger" in schedules[0]                 # its run time, e.g. "19:00-22:00"

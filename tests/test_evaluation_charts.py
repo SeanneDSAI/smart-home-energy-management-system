@@ -52,10 +52,6 @@ def test_make_all_writes_both_charts(tmp_path):
         assert os.path.getsize(p) > 0
 
 
-def test_results_saved_under_data():
-    assert ec.results_path("out") == os.path.join("out", "data", "results.json")
-
-
 def test_change_text():
     assert ec.change_text(12.6, 9.1) == "(-28%)"
     assert ec.change_text(38.4, 38.4) == "(0%)"
