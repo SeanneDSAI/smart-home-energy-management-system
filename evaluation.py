@@ -74,11 +74,53 @@ def show_scenario(name, problem):
         )
 
 
+# Compare backtracking with different combinations of heuristics
+def evaluate_csp(problem):
+
+    print("\nCSP Performance Comparison")
+    print("-" * 75)
+
+    configurations = [
+        ("Backtracking", False, False),
+        ("Backtracking + MRV", True, False),
+        ("Backtracking + FC", False, True),
+        ("Backtracking + MRV + FC", True, True)
+    ]
+
+    print(f"{'Algorithm':<28} {'Solutions':>10} {'Nodes':>10} {'Time (ms)':>12} {'Valid':>8}")
+
+    for name, mrv, fc in configurations:
+
+        start = time.perf_counter()
+
+        schedules, nodes = backtracking_search(
+            problem,
+            limit=100,
+            use_mrv=mrv,
+            use_forward_checking=fc
+        )
+
+        elapsed = (time.perf_counter() - start) * 1000
+
+        valid = len(schedules) > 0
+
+        for schedule in schedules:
+            if len(schedule) != len(problem["names"]):
+                valid = False
+
+            elif not is_valid(problem, schedule):
+                valid = False
+
+        print(f"{name:<28} {len(schedules):>10} {nodes:>10} {elapsed:>12.3f} {str(valid):>8}")
+
+
 def main():
     for name in SCENARIOS:
         problem = load_scenario(name)
 
         show_scenario(name, problem)
+
+        evaluate_csp(problem)
 
 
 if __name__ == "__main__":
