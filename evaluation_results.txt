@@ -15,19 +15,19 @@ ev_charger - 20 possible start times
 CSP Performance Comparison
 ---------------------------------------------------------------------------
 Algorithm                     Solutions      Nodes    Time (ms)    Valid
-Backtracking                        100        108        0.998     True
-Backtracking + MRV                  100        108        0.946     True
-Backtracking + FC                   100        108        1.893     True
-Backtracking + MRV + FC             100        108        1.890     True
+Backtracking                        100        108        0.940     True
+Backtracking + MRV                  100        108        0.933     True
+Backtracking + FC                   100        108        1.906     True
+Backtracking + MRV + FC             100        108        1.799     True
 
 Local Search Performance Comparison
 -------------------------------------------------------------------------------------
 Algorithm                  Avg Cost  Best Cost    Time (ms)    Valid %
 Earliest start               13.553     13.553        0.000     100.0%
 Random schedule              59.149     39.336        0.000       0.0%
-Hill climbing                 9.816      9.816        3.173     100.0%
-Random restart                9.816      9.816       65.373     100.0%
-Simulated annealing           9.820      9.816        5.668     100.0%
+Hill climbing                 9.816      9.816        3.270     100.0%
+Random restart                9.816      9.816       65.491     100.0%
+Simulated annealing           9.820      9.816        5.766     100.0%
 
 Energy Performance Comparison
 -------------------------------------------------------------------------------------
@@ -40,7 +40,7 @@ Optimal Solution Comparison
 ---------------------------------------------------------------------------
 Total valid schedules: 6240
 Search nodes visited: 6580
-Exhaustive search time: 133.549 ms
+Exhaustive search time: 136.906 ms
 Optimal objective score: 9.816
 
 Algorithm                     Score        Gap    Optimal
@@ -64,19 +64,19 @@ ev_charger - 20 possible start times
 CSP Performance Comparison
 ---------------------------------------------------------------------------
 Algorithm                     Solutions      Nodes    Time (ms)    Valid
-Backtracking                        100        108        0.865     True
-Backtracking + MRV                  100        108        0.729     True
-Backtracking + FC                   100        108        1.544     True
-Backtracking + MRV + FC             100        108        1.583     True
+Backtracking                        100        108        0.765     True
+Backtracking + MRV                  100        108        0.752     True
+Backtracking + FC                   100        108        1.557     True
+Backtracking + MRV + FC             100        108        1.796     True
 
 Local Search Performance Comparison
 -------------------------------------------------------------------------------------
 Algorithm                  Avg Cost  Best Cost    Time (ms)    Valid %
 Earliest start               15.544     15.544        0.000     100.0%
 Random schedule              61.139     41.327        0.000       0.0%
-Hill climbing                11.806     11.806        3.005     100.0%
-Random restart               11.806     11.806       63.250     100.0%
-Simulated annealing          11.810     11.806        5.968     100.0%
+Hill climbing                11.806     11.806        3.036     100.0%
+Random restart               11.806     11.806       64.122     100.0%
+Simulated annealing          11.810     11.806        5.553     100.0%
 
 Energy Performance Comparison
 -------------------------------------------------------------------------------------
@@ -89,7 +89,7 @@ Optimal Solution Comparison
 ---------------------------------------------------------------------------
 Total valid schedules: 6240
 Search nodes visited: 6580
-Exhaustive search time: 130.547 ms
+Exhaustive search time: 131.48 ms
 Optimal objective score: 11.806
 
 Algorithm                     Score        Gap    Optimal
@@ -113,19 +113,19 @@ ev_charger - 42 possible start times
 CSP Performance Comparison
 ---------------------------------------------------------------------------
 Algorithm                     Solutions      Nodes    Time (ms)    Valid
-Backtracking                        100        106        1.167     True
-Backtracking + MRV                  100        106        1.190     True
-Backtracking + FC                   100        106        2.825     True
-Backtracking + MRV + FC             100        106        2.793     True
+Backtracking                        100        106        1.223     True
+Backtracking + MRV                  100        106        1.244     True
+Backtracking + FC                   100        106        2.929     True
+Backtracking + MRV + FC             100        106        2.738     True
 
 Local Search Performance Comparison
 -------------------------------------------------------------------------------------
 Algorithm                  Avg Cost  Best Cost    Time (ms)    Valid %
 Earliest start                9.764      9.764        0.000     100.0%
 Random schedule               7.712      5.096        0.000     100.0%
-Hill climbing                 3.482      3.296        5.068     100.0%
-Random restart                3.296      3.296      110.496     100.0%
-Simulated annealing           3.584      3.296        6.531     100.0%
+Hill climbing                 3.482      3.296        5.262     100.0%
+Random restart                3.296      3.296      111.047     100.0%
+Simulated annealing           3.584      3.296        6.467     100.0%
 
 Energy Performance Comparison
 -------------------------------------------------------------------------------------
@@ -138,7 +138,7 @@ Optimal Solution Comparison
 ---------------------------------------------------------------------------
 Total valid schedules: 1400320
 Search nodes visited: 1432742
-Exhaustive search time: 29755.413 ms
+Exhaustive search time: 29800.828 ms
 Optimal objective score: 3.296
 
 Algorithm                     Score        Gap    Optimal
@@ -162,19 +162,19 @@ ev_charger - 20 possible start times
 CSP Performance Comparison
 ---------------------------------------------------------------------------
 Algorithm                     Solutions      Nodes    Time (ms)    Valid
-Backtracking                        100        116        1.334     True
-Backtracking + MRV                  100        116        1.369     True
-Backtracking + FC                   100        116        1.835     True
-Backtracking + MRV + FC             100        116        2.290     True
+Backtracking                        100        116        1.319     True
+Backtracking + MRV                  100        116        1.320     True
+Backtracking + FC                   100        116        1.783     True
+Backtracking + MRV + FC             100        116        1.937     True
 
 Local Search Performance Comparison
 -------------------------------------------------------------------------------------
 Algorithm                  Avg Cost  Best Cost    Time (ms)    Valid %
 Earliest start               84.553     84.553        0.000       0.0%
 Random schedule              77.349     49.258        0.000       0.0%
-Hill climbing                 9.824      9.817        3.427     100.0%
-Random restart                9.817      9.817       71.488     100.0%
-Simulated annealing           9.822      9.819        5.903     100.0%
+Hill climbing                 9.824      9.817        3.514     100.0%
+Random restart                9.817      9.817       70.214     100.0%
+Simulated annealing           9.822      9.819        6.192     100.0%
 
 Energy Performance Comparison
 -------------------------------------------------------------------------------------
@@ -187,7 +187,7 @@ Optimal Solution Comparison
 ---------------------------------------------------------------------------
 Total valid schedules: 2150
 Search nodes visited: 2480
-Exhaustive search time: 54.257 ms
+Exhaustive search time: 69.536 ms
 Optimal objective score: 9.817
 
 Algorithm                     Score        Gap    Optimal
