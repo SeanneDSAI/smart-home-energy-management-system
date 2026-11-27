@@ -100,7 +100,6 @@ def make_charts(session):
     print("\nSaved to %s:" % IMAGES)
     for number, path in enumerate(images, 1):
         print("  %d  %s" % (number, os.path.basename(path)))
-    print("  (plus day_slots.csv with the numbers behind them)")
 
     while True:
         choice = ask("\nShow a chart? Number, 'a' for all, Enter to skip: ").lower()
