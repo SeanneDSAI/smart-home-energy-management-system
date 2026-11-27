@@ -14,7 +14,7 @@ sys.path.insert(0, ROOT)
 
 from src.knowledge_base import (load_knowledge_base, time_to_slot, slots_between,  # noqa: E402
                                 query_graph, appliances_of_type, price, facts_at,
-                                hourly_value, slot_to_time, describe_kb)
+                                hourly_value, slot_to_time, describe_kb, _hourly)
 
 KB = load_knowledge_base(os.path.join(ROOT, "data", "scenarios", "example"))
 
@@ -112,6 +112,19 @@ def test_house_without_solar_or_battery():
         assert "solar_generating" not in noon and "has_battery" not in noon
     finally:
         shutil.rmtree(folder, ignore_errors=True)
+
+
+def test_bad_hourly_profiles_rejected():
+    # A short or broken hourly list used to load fine, then crash later with an
+    # IndexError. It should now be rejected with a clear ValueError.
+    for bad in ([0.3] * 23, [0.3] * 25, [0.3] * 23 + ["0.3"], "0.3"):
+        try:
+            _hourly({"base_load_kw_hourly": bad}, "base_load_kw_hourly", "home.json")
+        except ValueError as error:
+            assert "base_load_kw_hourly" in str(error)
+            continue
+        raise AssertionError("%r should have been rejected" % (bad,))
+    assert _hourly({}, "solar_kw_hourly", "home.json", default=[0] * 24) == [0] * 24
 
 
 def test_slot_to_time():

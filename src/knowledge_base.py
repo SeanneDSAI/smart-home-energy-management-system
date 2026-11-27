@@ -90,9 +90,24 @@ def load_knowledge_base(folder):
 
     return {"graph": graph, "tariff": tariff, "occupied": occupied, "quiet": quiet,
             "prices": {p["name"]: p["price_eur_per_kwh"] for p in data["tariff"]["periods"]},
-            "carbon": data["tariff"]["carbon_g_per_kwh_hourly"],   # all these are 24 hourly values
-            "solar": home.get("solar_kw_hourly", [0] * 24),        
-            "base_load": home["base_load_kw_hourly"]}              
+            "carbon": _hourly(data["tariff"], "carbon_g_per_kwh_hourly", "tariff.json"),
+            "solar": _hourly(home, "solar_kw_hourly", "home.json", default=[0] * 24),
+            "base_load": _hourly(home, "base_load_kw_hourly", "home.json")}
+
+
+def _hourly(data, key, filename, default=None):
+    """An hourly profile: must be a list of exactly 24 numbers (one per hour).
+    Checked here so a short list fails on load, not later as an IndexError."""
+    values = data.get(key, default)
+    if values is None:
+        raise ValueError(filename + ": missing '" + key + "'")
+    if not isinstance(values, list) or len(values) != 24:
+        count = len(values) if isinstance(values, list) else "not a list"
+        raise ValueError("%s: '%s' must have 24 hourly values, got %s" % (filename, key, count))
+    for hour, value in enumerate(values):
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError("%s: '%s' hour %d is not a number: %r" % (filename, key, hour, value))
+    return values
 
 
 #  queries 

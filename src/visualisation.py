@@ -15,7 +15,6 @@ code makes both the single-chart PNG and its panel in the dashboard.
 
 """
 
-import csv
 import os
 import sys
 
@@ -226,7 +225,7 @@ def plot_dashboard(kb, problem, sources, rows, schedules, path):
 # ---------------------------------------------------------------------------
 
 def make_all(kb, out_dir, restarts=20, schedules=None):
-    """Build every chart and the CSV in out_dir; return the paths written.
+    """Build every chart and the dashboard in out_dir; return the paths written.
     schedules: {name: schedule} as from solve_all, to chart results already found
     (the first entry is the baseline). Left out, the searches are run here."""
     os.makedirs(out_dir, exist_ok=True)
