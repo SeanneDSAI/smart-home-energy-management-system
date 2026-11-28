@@ -375,7 +375,7 @@ Each member owned one part of the system and its tests, and the parts were joine
 |---|---|---|---|
 | Dillon Thornton | Knowledge Base & Data Model | *To be completed by Dillon* | [dillon329](https://github.com/dillon329) |
 | Alex Rolff | CSP Scheduler & Search | *To be completed by Alex* | [roflalex](https://github.com/roflalex) |
-| Seanne Oriemo | Rule-Based Controller | *To be completed by Seanne* | [SeanneDSAI](https://github.com/SeanneDSAI) |
+| Seanne Oriemo | Rule-Based Controller | Built the rule-based expert system: the forward-chaining rules with a written reason for each decision ([src/rules.py](src/rules.py)) and the battery controller that runs them across the day on top of the optimised schedule, within the supply limit ([src/controller.py](src/controller.py)), with their tests ([tests/test_rules.py](tests/test_rules.py), [tests/test_controller.py](tests/test_controller.py)). Set up the GitHub repository and co-wrote the proposal. | [SeanneDSAI](https://github.com/SeanneDSAI) |
 | Arshdip Chera | Local Search & Optimisation | *To be completed by Arshdip* | [AshACxx](https://github.com/AshACxx) |
 | Karl Ypil | Testing & Evaluation | *To be completed by Karl* | [Kpil06](https://github.com/Kpil06) |
 | Allen Lapitan | Integration & Documentation | Joined the parts into a working system: the menu ([main_cli.py](main_cli.py)), the scheduler ([src/scheduler.py](src/scheduler.py)), the charts and dashboard ([src/visualisation.py](src/visualisation.py)) and the evaluation charts ([src/evaluation_charts.py](src/evaluation_charts.py)), with their tests. Wrote this README and co-wrote the proposal. | [lentenamen](https://github.com/lentenamen) |
