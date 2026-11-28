@@ -75,7 +75,7 @@ def day_data(kb, schedule, problem=None):
     already been built from kb, to avoid building it again."""
     problem = problem or make_problem(kb)
     sources = demand_by_source(problem, schedule)
-    battery_log = run_day(kb)
+    battery_log = run_day(kb, schedule)
     rows = []
     for s in range(SLOTS_PER_DAY):
         demand = sum(load[s] for load in sources.values())
