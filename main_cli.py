@@ -7,9 +7,9 @@ import os
 import random
 import sys
 
-from src.knowledge_base import load_knowledge_base, describe_kb, slot_to_time
+from src.knowledge_base import load_knowledge_base, describe_kb
 from src.controller import print_day
-from src.csp import make_problem, is_valid
+from src.csp import make_problem, is_valid, schedule_to_times
 from src.scheduler import solve_all, schedule_costs, best_schedule
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -20,6 +20,9 @@ DEFAULT_SCENARIO = os.path.join(SCENARIOS, "example")
 # The searches are random. A fixed seed makes every run give the same results,
 # so the numbers in the report and the demo always match.
 SEED = 1
+
+# What can go wrong loading a scenario: missing files, bad values, missing keys
+LOAD_ERRORS = (OSError, ValueError, KeyError)
 
 MENU = """
 =======================================
@@ -50,8 +53,8 @@ def list_scenarios():
 
 
 def load_session(folder):
-    """A fresh session for the scenario in folder. Raises OSError, ValueError
-    or KeyError if the scenario cannot be loaded.
+    """A fresh session for the scenario in folder. Raises one of LOAD_ERRORS
+    if the scenario cannot be loaded.
     Its charts go in outputs/<scenario name>/images/."""
     kb = load_knowledge_base(folder)
     problem = make_problem(kb)
@@ -82,20 +85,19 @@ def find_best_schedule(session):
     session["schedules"] = schedules
     costs = schedule_costs(problem, schedules)
 
-    print("\n  %-26s %8s  %s" % ("Schedule", "Cost", "Valid"))
+    print("\n  %-30s %8s  %s" % ("Schedule", "Cost", "Valid"))
     for name, schedule in schedules.items():
-        print("  %-26s %8.3f  %s" % (name, costs[name],
+        print("  %-30s %8.3f  %s" % (name, costs[name],
                                      "yes" if is_valid(problem, schedule) else "NO"))
 
     winner = best_schedule(costs)
-    best = schedules[winner]
+    times = schedule_to_times(problem, schedules[winner])
     print("\nBest schedule (%s):" % winner)
     print("\n  %-18s %6s  %s" % ("Appliance", "kW", "Runs"))
     for i, name in enumerate(problem["names"]):
-        start = best[i]
+        start, finish = times[name]
         noisy = "  (noisy)" if problem["noisy"][i] else ""
-        print("  %-18s %6.1f  %s-%s%s" % (name, problem["power"][i], slot_to_time(start),
-                                         slot_to_time(start + problem["duration"][i]), noisy))
+        print("  %-18s %6.1f  %s-%s%s" % (name, problem["power"][i], start, finish, noisy))
 
 
 def run_controller(session):
@@ -108,9 +110,15 @@ def make_charts(session):
     import matplotlib.pyplot as plt
     from src.visualisation import make_all
 
-    if not session["schedules"]:
-        print("\nRunning the searches first...")
-    images = make_all(session["kb"], session["outputs"], schedules=session["schedules"])
+    if session["schedules"] is None:
+        # charts need the schedules; find them once and keep them for option 2 too
+        problem = session["problem"]
+        if problem["names"]:
+            print("\nRunning the searches first...")
+            session["schedules"] = solve_all(problem)
+        else:
+            session["schedules"] = {}
+    images = make_all(session["kb"], session["outputs"], session["schedules"])
     print("\nSaved to %s:" % session["outputs"])
     for number, path in enumerate(images, 1):
         print("  %d  images/%s" % (number, os.path.basename(path)))
@@ -153,7 +161,7 @@ def switch_scenario(session):
     folder = os.path.join(SCENARIOS, names[int(choice) - 1])
     try:
         session.update(load_session(folder))
-    except (OSError, ValueError, KeyError) as error:
+    except LOAD_ERRORS as error:
         print("Could not load scenario '%s': %s" % (names[int(choice) - 1], error))
         return
     print("Switched to %s." % session["name"])
@@ -171,7 +179,7 @@ def main():
     folder = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_SCENARIO
     try:
         session = load_session(folder)
-    except (OSError, ValueError, KeyError) as error:
+    except LOAD_ERRORS as error:
         print("Could not load scenario '%s': %s" % (folder, error))
         return 1
 
@@ -186,7 +194,7 @@ def main():
         if action is None:
             print("Unknown option '%s'." % choice)
             continue
-        random.seed(SEED)    
+        random.seed(SEED)
         try:
             action(session)
         except KeyboardInterrupt:

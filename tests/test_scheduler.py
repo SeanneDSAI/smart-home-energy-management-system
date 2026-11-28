@@ -23,7 +23,7 @@ PROBLEM = make_problem(load_knowledge_base(os.path.join(ROOT, "data", "scenarios
 def test_solve_all_baseline_first():
     random.seed(1)
     schedules = solve_all(PROBLEM)
-    assert list(schedules) == [BASELINE, "Hill climbing", "Simulated annealing"]
+    assert list(schedules) == [BASELINE, "Random-restart hill climbing", "Simulated annealing"]
     assert schedules[BASELINE] == [d[0] for d in PROBLEM["domains"]]
 
 

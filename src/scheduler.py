@@ -26,7 +26,7 @@ def solve_all(problem):
     followed by both search algorithms. The baseline is always the first entry."""
     return {
         BASELINE: [d[0] for d in problem["domains"]],
-        "Hill climbing": random_restarting_hillclimbing(problem),
+        "Random-restart hill climbing": random_restarting_hillclimbing(problem),
         "Simulated annealing": simulated_annealing(problem, random_state(problem)),
     }
 

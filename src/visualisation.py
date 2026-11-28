@@ -71,7 +71,8 @@ def pretty_name(name):
 
 def day_data(kb, schedule, problem=None):
     """One dict per slot with demand, solar, grid import, price, carbon and battery.
-    Demand split by appliance is in the returned sources. Pass problem if it has already been built from kb, to avoid building it again."""
+    Demand split by appliance is in the returned sources. Pass problem if it has
+    already been built from kb, to avoid building it again."""
     problem = problem or make_problem(kb)
     sources = demand_by_source(problem, schedule)
     battery_log = run_day(kb)
@@ -211,16 +212,15 @@ def plot_dashboard(kb, problem, sources, rows, costs, path):
 # Entry point
 # ---------------------------------------------------------------------------
 
-def make_all(kb, out_dir, schedules=None):
+def make_all(kb, out_dir, schedules):
     """Write every chart and the dashboard to out_dir/images; return the paths written.
-    schedules: {name: schedule} as from solve_all, to chart results already found
-    (the first entry is the baseline). Left out, the searches are run here."""
+    schedules: {name: schedule} as from scheduler.solve_all, baseline first.
+    Empty when the scenario has no flexible appliances to schedule."""
     images = os.path.join(out_dir, "images")
     os.makedirs(images, exist_ok=True)
     problem = make_problem(kb)
     costs, best = {}, []
-    if problem["names"]:
-        schedules = schedules or solve_all(problem)
+    if schedules:
         costs = schedule_costs(problem, schedules)
         best = schedules[best_schedule(costs)]
     problem, sources, rows = day_data(kb, best, problem)
@@ -248,5 +248,8 @@ if __name__ == "__main__":
     args = sys.argv[1:]
     folder = args[0] if args else os.path.join(ROOT, "data", "scenarios", "example")
     out_dir = args[1] if len(args) > 1 else os.path.join(OUTPUTS, os.path.basename(os.path.normpath(folder)))
-    for p in make_all(load_knowledge_base(folder), out_dir):
+    kb = load_knowledge_base(folder)
+    problem = make_problem(kb)
+    schedules = solve_all(problem) if problem["names"] else {}
+    for p in make_all(kb, out_dir, schedules):
         print("wrote", p)
