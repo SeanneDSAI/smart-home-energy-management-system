@@ -101,9 +101,25 @@ def find_best_schedule(session):
 
 
 def run_controller(session):
+    """Run the battery controller on top of the best schedule, so the battery
+    reacts to the appliances the search placed."""
+    problem = session["problem"]
+    schedule = None
+    if problem["names"]:
+        if not session["schedules"]:
+            # find the schedules once and keep them for options 2 and 4 too
+            print("\nFinding the best schedule first...")
+            session["schedules"] = solve_all(problem)
+        winner = best_schedule(schedule_costs(problem, session["schedules"]))
+        schedule = session["schedules"][winner]
+        times = schedule_to_times(problem, schedule)
+        print("\nUsing the best schedule (%s):" % winner)
+        for name in problem["names"]:
+            start, finish = times[name]
+            print("  %-18s %s-%s" % (name, start, finish))
+
     print("\nBattery controller (slots where it acts or gives advice):\n")
-    print_day(session["kb"])
-    print("\nNote: the controller does not yet include the scheduled flexible appliances.")
+    print_day(session["kb"], schedule)
 
 
 def make_charts(session):
