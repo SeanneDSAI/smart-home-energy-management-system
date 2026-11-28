@@ -99,6 +99,11 @@ RULES = [
          "charge_battery_solar",
          "spare solar beyond the home's demand, with room in the battery"),
 
+     Rule("supply_guard",
+          frozenset({"at_supply_limit"}),
+          "block_grid_charging",
+          "the home is already using its full supply, so do not charge from the grid")
+
     Rule("quiet_no_noise",
          frozenset({"quiet_hours"}),
          "no_noisy_appliances",
