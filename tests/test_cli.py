@@ -1,3 +1,10 @@
+"""
+Tests for main_cli.py: drive the interactive menu with scripted input and
+check each option prints what it should.
+Run from the repository root:
+    pytest tests/test_cli.py
+"""
+
 import os
 import sys
 
@@ -35,3 +42,29 @@ def test_find_best_schedule(monkeypatch, capsys):
 def test_run_controller(monkeypatch, capsys):
     _, out = run_menu(monkeypatch, capsys, ["3", "", "q"])
     assert "Battery controller" in out
+
+
+def test_switch_scenario(monkeypatch, capsys):
+    number = str(main_cli.list_scenarios().index("high_solar") + 1)
+    _, out = run_menu(monkeypatch, capsys, ["5", number, "", "1", "", "q"])
+    for name in main_cli.list_scenarios():         # every scenario is offered
+        assert name in out
+    assert "example  (current)" in out
+    assert "Switched to" in out and "high_solar" in out
+    assert "outputs/high_solar/" in out             # the menu shows where its charts go
+    assert "7.0 kW at" in out                       # option 1 now describes high_solar's solar peak
+
+
+def test_switch_scenario_bad_number(monkeypatch, capsys):
+    _, out = run_menu(monkeypatch, capsys, ["5", "99", "", "q"])
+    assert "Pick a number" in out and "Switched to" not in out
+
+
+def test_outputs_go_to_scenario_folder(monkeypatch, capsys, tmp_path):
+    matplotlib = pytest.importorskip("matplotlib")
+    matplotlib.use("Agg")
+    monkeypatch.setattr(main_cli, "OUTPUTS", str(tmp_path))
+    number = str(main_cli.list_scenarios().index("no_solar_battery") + 1)
+    run_menu(monkeypatch, capsys, ["5", number, "", "4", "", "", "q"])
+    assert (tmp_path / "no_solar_battery" / "images" / "dashboard.png").exists()
+    assert not (tmp_path / "example").exists()          # other scenarios are left alone

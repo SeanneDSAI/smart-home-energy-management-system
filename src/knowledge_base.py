@@ -211,7 +211,9 @@ def describe_kb(kb):
         lines.append("  %.1f kWh capacity, starts at %.1f kWh, keeps %.1f kWh in reserve" % (
             battery["capacity_kwh"], battery["initial_charge_kwh"], battery["min_charge_kwh"]))
         lines.append("  charge %.1f kW / discharge %.1f kW, %d%% efficient" % (
-            battery["max_charge_kw"], battery["max_discharge_kw"], round(battery["efficiency"] * 100)))
+            battery["max_charge_kw"], battery["max_discharge_kw"],
+            # same default as the controller: no efficiency given means no losses
+            round(battery.get("efficiency", 1.0) * 100)))
     else:
         lines.append("  none")
     return "\n".join(lines)

@@ -1,0 +1,110 @@
+{
+  "example": {
+    "energy": {
+      "Earliest start": {
+        "cost_eur": 12.607999999999997,
+        "co2_kg": 11.389,
+        "grid_kwh": 38.4,
+        "valid": true
+      },
+      "Random restart": {
+        "cost_eur": 9.088,
+        "co2_kg": 8.772,
+        "grid_kwh": 38.400000000000006,
+        "valid": true
+      }
+    },
+    "optimality": {
+      "valid_schedules": 6240,
+      "nodes": 6580,
+      "time_ms": 216.97679999988395,
+      "optimal_score": 9.816075999999999,
+      "gaps": {
+        "Hill climbing": 0.0,
+        "Random restart": 0.0,
+        "Simulated annealing": 0.002489999999999881
+      }
+    }
+  },
+  "no_solar_battery": {
+    "energy": {
+      "Earliest start": {
+        "cost_eur": 14.469999999999999,
+        "co2_kg": 12.936,
+        "grid_kwh": 43.900000000000006,
+        "valid": true
+      },
+      "Random restart": {
+        "cost_eur": 10.949999999999996,
+        "co2_kg": 10.319,
+        "grid_kwh": 43.89999999999998,
+        "valid": true
+      }
+    },
+    "optimality": {
+      "valid_schedules": 6240,
+      "nodes": 6580,
+      "time_ms": 223.44610000027387,
+      "optimal_score": 11.806476999999996,
+      "gaps": {
+        "Hill climbing": 0.0,
+        "Random restart": 0.0,
+        "Simulated annealing": 0.002489999999999881
+      }
+    }
+  },
+  "high_solar": {
+    "energy": {
+      "Earliest start": {
+        "cost_eur": 9.09,
+        "co2_kg": 8.119,
+        "grid_kwh": 28.500000000000004,
+        "valid": true
+      },
+      "Random restart": {
+        "cost_eur": 3.0759999999999996,
+        "co2_kg": 2.645,
+        "grid_kwh": 9.399999999999999,
+        "valid": true
+      }
+    },
+    "optimality": {
+      "valid_schedules": 1400320,
+      "nodes": 1432742,
+      "time_ms": 84445.11429999967,
+      "optimal_score": 3.2955349999999997,
+      "gaps": {
+        "Hill climbing": 0.0721500000000006,
+        "Random restart": 0.0,
+        "Simulated annealing": 0.9790880000000013
+      }
+    }
+  },
+  "restricted_supply": {
+    "energy": {
+      "Earliest start": {
+        "cost_eur": 12.607999999999997,
+        "co2_kg": 11.389,
+        "grid_kwh": 38.4,
+        "valid": false
+      },
+      "Random restart": {
+        "cost_eur": 9.087999999999997,
+        "co2_kg": 8.787,
+        "grid_kwh": 38.400000000000006,
+        "valid": true
+      }
+    },
+    "optimality": {
+      "valid_schedules": 2150,
+      "nodes": 2480,
+      "time_ms": 85.78960000022562,
+      "optimal_score": 9.817320999999998,
+      "gaps": {
+        "Hill climbing": 0.0,
+        "Random restart": 0.0,
+        "Simulated annealing": 0.004980000000001539
+      }
+    }
+  }
+}
