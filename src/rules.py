@@ -102,7 +102,7 @@ RULES = [
      Rule("supply_guard",
           frozenset({"at_supply_limit"}),
           "block_grid_charging",
-          "the home is already using its full supply, so do not charge from the grid")
+          "the home is already using its full supply, so do not charge from the grid"),
 
     Rule("quiet_no_noise",
          frozenset({"quiet_hours"}),
